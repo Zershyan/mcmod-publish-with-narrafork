@@ -42,6 +42,39 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'docs/mcmod/crea
 - 正文不允许出现裸网址，链接一律 `<a href="地址" target="_blank" title="悬浮提示">链接文字</a>`。
 - 只写已公开发布的版本和功能，本地未发布的改动要提醒用户。
 
+## 提交字段
+
+表单提交走 `POST https://event.mcmod.cn/action/edit/doEdit/`，参数是 `data=<JSON 字符串>`。结构：
+
+```json
+{
+  "action": "class_add",
+  "edit-id": "0",
+  "class-id": "0",
+  "redo-id": "0",
+  "class-data": {
+    "name": "主要名称", "ename": "次要名称", "sname": "简写",
+    "intro": "一句话简介", "modid": "modid",
+    "cfprojectid": "123456", "mrprojectid": "",
+    "content": "<p>[ban:title_menu]</p>…",
+    "category": { "0": "1,7" },
+    "platform": { "0": "1" },
+    "api": { "0": "13" },
+    "mode-1": { "0": "1" },
+    "mode-2": { "0": "1" },
+    "status": { "0": "1" },
+    "source": { "0": "1" },
+    "tags": { "0": "标签" },
+    "link": { "0": { "title": "curseforge", "custom": "", "href": "地址", "text": "" } },
+    "author": { "link": { "0": { "select": ["owner"], "id": "作者ID" } } }
+  }
+}
+```
+
+- 文本字段直接是字符串；勾选、标签、分类是 `{序号: 值}` 形式，**序号只是遍历下标，服务端只认值**。
+- `author.link` 关联已有作者（按作者页数字 ID），`author.add` 直接写名字新建。
+- 枚举取值见 [mcmod-enums.json](../assets/mcmod-enums.json)，例如 `api` 的 `13` 是 NeoForge、`status` 的 `1` 是活跃、`source` 的 `2` 是闭源。
+
 ## 产出
 
 记下百科模组 ID（资料添加页地址 `/item/add/<模组ID>/` 里的数字），阶段 5 要用。

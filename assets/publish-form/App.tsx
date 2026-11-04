@@ -95,10 +95,10 @@ const CF_ZH: Record<string, string> = Object.fromEntries(
 const LOADERS = ["NeoForge", "Forge", "Fabric"];
 const RELEASE_TYPES = ["release", "beta", "alpha"];
 const ENVS = ["双端", "仅客户端", "仅服务端"];
-const CORE_ELEMENTS = ["实用", "科技", "魔法", "冒险", "农业", "装饰", "LIB"];
+const CORE_ELEMENTS = ["实用", "科技", "魔法", "冒险", "农业", "装饰", "LIB", "魔改", "辅助"];
 const ROLES = ["所有者", "开发者", "程序", "美术", "策划", "音乐", "文案", "测试", "搬运", "鸣谢"];
-const WIKI_STATUS = ["活跃", "停更", "合并", "重制", "分割"];
-const WIKI_SOURCE = ["开源", "闭源", "部分开源"];
+const WIKI_STATUS = ["不确定", "活跃", "半弃坑", "停更"];
+const WIKI_SOURCE = ["不显示", "开源", "闭源"];
 const DEP_TYPES = [
 	{ value: "required", label: "必需前置" },
 	{ value: "optional", label: "可选前置" },
