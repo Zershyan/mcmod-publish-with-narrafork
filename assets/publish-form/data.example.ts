@@ -41,6 +41,8 @@ export const DATA = {
 		wStatus: "活跃",
 		wLicenseType: "源码",
 		wLicenseName: "ARR",
+		wTags: [] as string[],
+		wKeys: [] as string[],
 		wAuthorName: "Zershyan",
 		wLinks: "https://github.com/Zershyan/SnowyCrescentCore",
 	},

@@ -58,6 +58,8 @@ def build(cfg: dict) -> dict:
     }
     if cfg.get('tags'):
         data['tags'] = indexed(cfg['tags'])
+    if cfg.get('keys'):
+        data['keys'] = indexed(cfg['keys'])
     if cfg.get('links'):
         data['link'] = {
             str(i): {

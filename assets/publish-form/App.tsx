@@ -169,6 +169,10 @@ const envToSides = (env: string): [string, string] => {
 	return ["需装", "需装"];
 };
 
+/** 百科的标签/关键词字段要求 {下标: 值} 形式 */
+const indexed = (values?: string[]) =>
+	Object.fromEntries((values ?? []).filter(Boolean).map((value, i) => [String(i), value]));
+
 const emptyVersion = (): Version => ({
 	modVersion: "",
 	mcVersions: [],
@@ -330,6 +334,8 @@ export default function App() {
 		out.wCover = wCover?.name ?? "src/main/resources/logo.png";
 		out.wSource = (v.wSource as string) ?? derivedSource;
 		out.wikiTargets = targets;
+		out.wTags = indexed(out.wTags);
+		out.wKeys = indexed(out.wKeys);
 		out.wClient = (v.wClient as string) ?? derivedClient;
 		out.wServer = (v.wServer as string) ?? derivedServer;
 		out.versions = versions;
@@ -783,6 +789,20 @@ export default function App() {
 									</Grid.Col>
 									<Grid.Col span={4}>
 										{picker("封面（16:10）", wCover, setWCover, D.coverHint)}
+									</Grid.Col>
+									<Grid.Col span={6}>
+										<TagsInput
+											label="模组标签"
+											placeholder={D.defaults.wTags}
+											{...multi("wTags")}
+										/>
+									</Grid.Col>
+									<Grid.Col span={6}>
+										<TagsInput
+											label="搜索关键词"
+											placeholder={D.defaults.wKeys}
+											{...multi("wKeys")}
+										/>
 									</Grid.Col>
 								</Grid>
 							</Card>
