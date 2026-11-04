@@ -34,6 +34,8 @@ export const DATA = {
 		wIntro: "供其他模组使用的库，提供能力注册、玩家动画与数据生成 API",
 		wModid: "sccore",
 		wCfId: "阶段 2 建完项目后填入",
+		wMrId: "没有就留空",
+		wRelations: "代码联动的前置或附属",
 		wCore: "LIB",
 		wExtra: [] as string[],
 		wStatus: "活跃",
@@ -47,6 +49,7 @@ export const DATA = {
 			modVersion: "1.20.1-1.0.1",
 			mcVersions: ["1.20.1"],
 			loaders: ["Forge"],
+			javaVersion: "Java 17",
 			releaseType: "release",
 			env: "双端",
 			changelog: "",
@@ -55,6 +58,7 @@ export const DATA = {
 			modVersion: "2.0.0-1.21.1+build.34",
 			mcVersions: ["1.21.1"],
 			loaders: ["NeoForge"],
+			javaVersion: "Java 21",
 			releaseType: "release",
 			env: "双端",
 			changelog: "",
@@ -63,8 +67,15 @@ export const DATA = {
 
 	authors: [{ id: "", name: "Zershyan", role: "所有者" }],
 
-	/** 资料条目；没有内容物时留空数组 */
-	entries: [] as { name: string; regname: string; type: string; damage: string; stack: string }[],
+	/** 资料条目；没有内容物时留空数组。分类取 ENTRY_CATEGORIES 里的值 */
+	entries: [] as {
+		name: string;
+		regname: string;
+		category: string;
+		type: string;
+		damage: string;
+		stack: string;
+	}[],
 
 	/**
 	 * CurseForge 依赖关系。从 build.gradle 的 `curse.maven:<名>-<项目ID>:<文件ID>` 解析，

@@ -36,13 +36,23 @@ type Version = {
 	modVersion: string;
 	mcVersions: string[];
 	loaders: string[];
+	/** CurseForge 版本标签中的 Java 版本，如 "Java 21" */
+	javaVersion: string;
 	releaseType: string;
 	env: string;
 	changelog: string;
 };
 type Author = { id: string; name: string; role: string };
 type Dependency = { name: string; projectId: string; type: string };
-type Entry = { name: string; regname: string; type: string; damage: string; stack: string };
+type Entry = {
+	name: string;
+	regname: string;
+	/** 百科资料分类，取值见 ENTRY_CATEGORIES */
+	category: string;
+	type: string;
+	damage: string;
+	stack: string;
+};
 type FormData = {
 	modName: string;
 	badge: string;
@@ -91,6 +101,20 @@ const DEP_TYPES = [
 	{ value: "required", label: "必需前置" },
 	{ value: "optional", label: "可选前置" },
 	{ value: "incompatible", label: "不兼容" },
+];
+const JAVA_VERSIONS = ["Java 8", "Java 11", "Java 17", "Java 21", "Java 25"];
+/** 百科资料分类，与添加页 data-multi-value 顺序一致 */
+const ENTRY_CATEGORIES = [
+	"物品/方块",
+	"群系/群落",
+	"世界/维度",
+	"生物/实体",
+	"附魔/魔咒",
+	"BUFF/DEBUFF",
+	"多方块结构",
+	"自然生成",
+	"绑定热键",
+	"游戏设定",
 ];
 const BASE_LICENSES = ["GNU AGPL 3.0", "GPL 3.0", "LGPL 3.0", "MIT", "Apache 2.0", "All Rights Reserved"];
 
@@ -141,6 +165,7 @@ const emptyVersion = (): Version => ({
 	modVersion: "",
 	mcVersions: [],
 	loaders: [],
+	javaVersion: "Java 21",
 	releaseType: "release",
 	env: ENVS[0],
 	changelog: "",
@@ -266,7 +291,14 @@ export default function App() {
 		setDraft(null);
 	};
 	const addEntry = () => {
-		const created: Entry = { name: "", regname: "", type: "道具", damage: "-", stack: "1" };
+		const created: Entry = {
+			name: "",
+			regname: "",
+			category: "物品/方块",
+			type: "道具",
+			damage: "-",
+			stack: "1",
+		};
 		setEntries((list) => [...list, created]);
 		setEditing(entries.length);
 		setDraft({ ...created });
@@ -602,6 +634,16 @@ export default function App() {
 													</Grid.Col>
 													<Grid.Col span={4}>
 														<Select
+															label="Java 版本"
+															data={JAVA_VERSIONS}
+															value={item.javaVersion}
+															onChange={(val) =>
+																setVersion(index, { javaVersion: val ?? "Java 21" })
+															}
+														/>
+													</Grid.Col>
+													<Grid.Col span={4}>
+														<Select
 															label="发布类型"
 															data={RELEASE_TYPES}
 															value={item.releaseType}
@@ -674,7 +716,7 @@ export default function App() {
 											{...text("wIntro")}
 										/>
 									</Grid.Col>
-									<Grid.Col span={6}>
+									<Grid.Col span={4}>
 										<TextInput
 											label="MODID"
 											withAsterisk
@@ -682,11 +724,18 @@ export default function App() {
 											{...text("wModid")}
 										/>
 									</Grid.Col>
-									<Grid.Col span={6}>
+									<Grid.Col span={4}>
 										<TextInput
 											label="CurseForge Project ID"
 											placeholder={D.defaults.wCfId}
 											{...text("wCfId")}
+										/>
+									</Grid.Col>
+									<Grid.Col span={4}>
+										<TextInput
+											label="Modrinth Project ID（可空）"
+											placeholder={D.defaults.wMrId}
+											{...text("wMrId")}
 										/>
 									</Grid.Col>
 									<Grid.Col span={4}>
@@ -856,6 +905,16 @@ export default function App() {
 									</Grid.Col>
 									<Grid.Col span={12}>
 										<Textarea
+											label="模组关系"
+											description="代码联动的前置或附属，如「JEI（联动）、Jade（联动）」"
+											placeholder={D.defaults.wRelations}
+											minRows={2}
+											autosize
+											{...text("wRelations")}
+										/>
+									</Grid.Col>
+									<Grid.Col span={12}>
+										<Textarea
 											label="相关链接"
 											description="CF 项目页会自动补，其余一行一个"
 											placeholder={D.defaults.wLinks}
@@ -892,6 +951,7 @@ export default function App() {
 											<Table.Tr>
 												<Table.Th w={56}>图标</Table.Th>
 												<Table.Th>名称</Table.Th>
+												<Table.Th w={110}>分类</Table.Th>
 												<Table.Th>注册名</Table.Th>
 												<Table.Th w={100}>资料类型</Table.Th>
 												<Table.Th w={70}>耐久</Table.Th>
@@ -907,6 +967,9 @@ export default function App() {
 													</Table.Td>
 													<Table.Td>
 														<Text size="sm">{entry.name || "未命名"}</Text>
+													</Table.Td>
+													<Table.Td>
+														<Text size="sm">{entry.category}</Text>
 													</Table.Td>
 													<Table.Td>
 														<Text size="xs" c="dimmed" ff="monospace">
@@ -987,6 +1050,12 @@ export default function App() {
 						clearable
 					/>
 					<Select
+						label="Java 版本"
+						data={JAVA_VERSIONS}
+						value={newVersion.javaVersion}
+						onChange={(val) => setNewVersion({ ...newVersion, javaVersion: val ?? "Java 21" })}
+					/>
+					<Select
 						label="发布类型"
 						data={RELEASE_TYPES}
 						value={newVersion.releaseType}
@@ -1042,6 +1111,12 @@ export default function App() {
 							placeholder="modid:path"
 							value={draft.regname}
 							onChange={(e) => setDraft({ ...draft, regname: e.currentTarget.value })}
+						/>
+						<Select
+							label="资料分类"
+							data={ENTRY_CATEGORIES}
+							value={draft.category}
+							onChange={(val) => setDraft({ ...draft, category: val ?? "物品/方块" })}
 						/>
 						<TextInput
 							label="资料类型"
