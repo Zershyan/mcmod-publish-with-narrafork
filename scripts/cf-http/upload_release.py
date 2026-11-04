@@ -19,22 +19,48 @@ from curl_cffi import CurlMime
 BASE = 'https://minecraft.curseforge.com/api'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('mode', choices=['query', 'upload'])
+parser.add_argument('mode', choices=['query', 'list', 'upload'])
 parser.add_argument('path')
 parser.add_argument('--project-id')
 parser.add_argument('--slug')
 parser.add_argument('--proxy', help='覆盖系统代理，形如 127.0.0.1:端口')
 args = parser.parse_args()
 
-token = system_env('CURSEFORGE_API_TOKEN')
-if not token:
-    raise SystemExit('Missing CURSEFORGE_API_TOKEN')
-
 # 会话：模拟 Chrome 指纹，代理默认取系统代理
 proxy = args.proxy or system_proxy()
 session = requests.Session(impersonate='chrome')
 if proxy:
     session.proxies = {'http': 'http://' + proxy, 'https': 'http://' + proxy}
+
+# 列表模式：拉线上已有文件，用来判断某个版本是否已经传过；网页接口不需要令牌
+if args.mode == 'list':
+    if not args.project_id:
+        raise SystemExit('list needs --project-id')
+    out = Path(args.path)
+    out.mkdir(parents=True, exist_ok=True)
+    files, page = [], 0
+    while True:
+        response = session.get(
+            f'https://www.curseforge.com/api/v1/mods/{args.project_id}/files'
+            f'?pageIndex={page}&pageSize=50&sort=dateCreated&sortDescending=true',
+            timeout=40)
+        print('Files HTTP', response.status_code, 'page', page)
+        response.raise_for_status()
+        payload = response.json()
+        batch = payload.get('data') or []
+        files.extend(batch)
+        total = (payload.get('pagination') or {}).get('totalCount', 0)
+        if not batch or len(files) >= total:
+            break
+        page += 1
+    target = out / f'remote-files-{args.project_id}.json'
+    target.write_text(json.dumps(files, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(len(files), 'files ->', target)
+    raise SystemExit(0)
+
+token = system_env('CURSEFORGE_API_TOKEN')
+if not token:
+    raise SystemExit('Missing CURSEFORGE_API_TOKEN')
 session.headers['X-Api-Token'] = token
 
 # 查询模式：保存完整版本标签，供清单按数字 ID 选择
@@ -54,8 +80,26 @@ if not args.project_id or not args.slug:
 manifest_path = Path(args.path)
 root = manifest_path.parent
 manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+
+# 拉一次线上文件列表，按 displayName 判断是否已经传过；审核中的文件可能不在列表里，所以本地记录仍然要看
+remote_names = {}
+try:
+    probe = session.get(
+        f'https://www.curseforge.com/api/v1/mods/{args.project_id}/files'
+        f'?pageIndex=0&pageSize=50&sort=dateCreated&sortDescending=true',
+        timeout=40)
+    if probe.status_code < 400:
+        for item in probe.json().get('data') or []:
+            remote_names[item.get('displayName', '')] = item.get('id')
+        print('remote files checked:', len(remote_names))
+    else:
+        print('remote file check HTTP', probe.status_code, '- 继续，仅依赖本地记录')
+except Exception as error:
+    print('remote file check skipped:', error)
+
 for release in manifest['files']:
     label = release['minecraft']
+    display_name = release['metadata'].get('displayName', '')
     result_path = root / f'upload-result-{label}.json'
     attempt_path = root / f'upload-attempt-{label}.json'
     if result_path.exists():
@@ -63,6 +107,9 @@ for release in manifest['files']:
         if result.get('id'):
             print(label, 'already accepted', result['id'])
             continue
+    if display_name and display_name in remote_names:
+        print(label, 'already on CurseForge as file', remote_names[display_name])
+        continue
     if attempt_path.exists():
         raise SystemExit(f'Unresolved upload attempt for {label}; inspect remote files before retrying')
     artifact = Path(release['artifact'])
