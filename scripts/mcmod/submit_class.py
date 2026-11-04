@@ -9,6 +9,7 @@ cookie 从 .narrafork/mcmod-cookie.txt 读取。
 """
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -19,8 +20,28 @@ from browser_http import requests
 from find_author import find as find_author
 
 API = 'https://event.mcmod.cn/action/edit/doEdit/'
+ADD_PAGE = 'https://www.mcmod.cn/class/add/'
 COOKIE_FILE = ROOT / '.narrafork' / 'mcmod-cookie.txt'
 ENUMS = json.loads((ROOT / 'assets' / 'mcmod-enums.json').read_text(encoding='utf-8'))
+# 页面把全部 MC 版本内嵌成 var arrMCVer = $.parseJSON('[{"id":"78","name":"26.1.2"},…]')
+MC_VERSION_PATTERN = re.compile(r"arrMCVer\s*=\s*\$\.parseJSON\('(\[.*?\])'\)", re.S)
+
+
+def make_session():
+    if not COOKIE_FILE.exists():
+        raise SystemExit(f'缺少 cookie 文件：{COOKIE_FILE}')
+    session = requests.Session(impersonate='chrome')
+    session.headers['Cookie'] = COOKIE_FILE.read_text(encoding='utf-8').strip()
+    return session
+
+
+def fetch_mc_versions(session) -> dict[str, str]:
+    """从添加页取「版本号 -> 版本ID」映射；每次都可能变，必须现取。"""
+    html = session.get(ADD_PAGE, timeout=30).text
+    match = MC_VERSION_PATTERN.search(html)
+    if not match:
+        raise SystemExit('添加页里没找到 MC 版本列表，登录态可能已失效')
+    return {item['name']: item['id'] for item in json.loads(match.group(1))}
 
 
 def code_of(group: str, label: str) -> str:
@@ -37,7 +58,7 @@ def indexed(values) -> dict:
     return {str(i): v for i, v in enumerate(values)} if values else {}
 
 
-def build(cfg: dict) -> dict:
+def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
     data = {
         'name': cfg['name'],
         'ename': cfg.get('ename', ''),
@@ -56,6 +77,19 @@ def build(cfg: dict) -> dict:
         'source': indexed([code_of('source', cfg.get('source', '开源'))]),
         'content': cfg.get('content', ''),
     }
+    if cfg.get('mcVersions'):
+        # 形如 {"NeoForge": ["26.1.2"], "Forge": ["1.20.1"]}
+        mc_map = {}
+        for loader, versions in cfg['mcVersions'].items():
+            api_code = loader if loader in ENUMS['api'] else code_of('api', loader)
+            ids = []
+            for version in versions:
+                version_id = mc_ids.get(version)
+                if not version_id:
+                    raise SystemExit(f'页面里没有 MC 版本「{version}」')
+                ids.append(version_id)
+            mc_map[api_code] = indexed(ids)
+        data['mcversion'] = mc_map
     if cfg.get('tags'):
         data['tags'] = indexed(cfg['tags'])
     if cfg.get('keys'):
@@ -114,11 +148,7 @@ def build(cfg: dict) -> dict:
     }
 
 
-def submit(payload: dict) -> dict:
-    if not COOKIE_FILE.exists():
-        raise SystemExit(f'缺少 cookie 文件：{COOKIE_FILE}')
-    session = requests.Session(impersonate='chrome')
-    session.headers['Cookie'] = COOKIE_FILE.read_text(encoding='utf-8').strip()
+def submit(session, payload: dict) -> dict:
     response = session.post(
         API,
         data={'data': json.dumps(payload, ensure_ascii=False)},
@@ -138,7 +168,9 @@ def main():
     args = parser.parse_args()
 
     cfg = json.loads(Path(args.config).read_text(encoding='utf-8'))
-    payload = build(cfg)
+    session = make_session()
+    mc_ids = fetch_mc_versions(session)
+    payload = build(cfg, mc_ids)
     text = json.dumps(payload, ensure_ascii=False, indent=1)
 
     if args.dry_run:
@@ -147,7 +179,7 @@ def main():
         return
 
     print(text)
-    result = submit(payload)
+    result = submit(session, payload)
     print('\n返回：', json.dumps(result, ensure_ascii=False))
     if result.get('state') == 0:
         print('提交成功，地址：', result.get('url', '(无)'))
