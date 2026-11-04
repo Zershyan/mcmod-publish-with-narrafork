@@ -1,62 +1,32 @@
 /**
- * 表单数据。复制本文件为同目录的 data.ts，按项目改这里即可，App.tsx 不用动。
- * 字段来源见 skill 的 references/sources.md，凡是工程里读不到的都要先问用户。
+ * 表单数据。复制本文件为同目录的 data.ts，只改这里，App.tsx 不用动。
+ * 字段含义见 README.md，取值规则见 references/sources.md。
  */
-
-export type Version = {
-	/** 构建脚本里的 version，可能带 MC 版本与 build 号，按分支实际值填 */
-	modVersion: string;
-	mcVersions: string[];
-	loaders: string[];
-	releaseType: string;
-	env: string;
-	changelog: string;
-};
-
-export type Author = { id: string; name: string; role: string };
-
-export type Entry = {
-	name: string;
-	regname: string;
-	type: string;
-	damage: string;
-	stack: string;
-};
-
-export type FormData = {
-	modName: string;
-	badge: string;
+export const DATA = {
+	/** 模组英文名，显示在标题 */
+	modName: "SnowyCrescentCore",
+	/** 右上角角标，一般是许可证简称 */
+	badge: "GPL-3.0",
 	/** 项目特有许可证，追加到内置列表 */
-	extraLicenses?: string[];
+	extraLicenses: ["GPL-3.0-with-additional-terms"],
 	/**
 	 * 从 CurseForge Game Versions API 拉到的 MC 版本列表，优先于模板内置候选。
 	 * 正常流程先跑 `upload_release.py query`，把返回的版本写进来；拿不到时才省略。
 	 */
-	mcVersions?: string[];
-	iconHint: string;
-	coverHint: string;
-	/** 没有资料条目时显示的说明 */
-	entriesEmptyText: string;
-	defaults: Record<string, any>;
-	versions: Version[];
-	authors: Author[];
-	entries: Entry[];
-};
-
-export const DATA: FormData = {
-	modName: "SnowyCrescentCore",
-	badge: "GPL-3.0",
-	extraLicenses: ["GPL-3.0-with-additional-terms"],
+	mcVersions: [] as string[],
 	iconHint: "默认 logo.png（64×64）",
 	coverHint: "logo 仅 64×64，需放大加底色",
+	/** 没有资料条目时显示的说明 */
 	entriesEmptyText: "本项目是纯库模组，语言文件里没有物品、方块与实体，阶段 5 会自动跳过。",
+
+	/** 所有字段的 placeholder，即调研值；留空的项按这些值执行 */
 	defaults: {
 		cfName: "SnowyCrescentCore",
 		cfSummary: "A lib from zershyan.",
 		cfDescription: "按工程 README 与源码整理，英文块 + --- + 中文块",
 		cfLicense: "GPL-3.0-with-additional-terms",
 		cfCategory: "API and Library",
-		cfExtraCategories: [],
+		cfExtraCategories: [] as string[],
 		cfSourceUrl: "https://github.com/Zershyan/SnowyCrescentCore",
 
 		wName: "（待确认）",
@@ -65,11 +35,13 @@ export const DATA: FormData = {
 		wModid: "sccore",
 		wCfId: "阶段 2 建完项目后填入",
 		wCore: "LIB",
-		wExtra: [],
+		wExtra: [] as string[],
 		wStatus: "活跃",
 		wAuthorName: "Zershyan",
 		wLinks: "https://github.com/Zershyan/SnowyCrescentCore",
 	},
+
+	/** 版本条目：modVersion 填构建脚本里的实际 version，不要按统一规则拼 */
 	versions: [
 		{
 			modVersion: "1.20.1-1.0.1",
@@ -88,6 +60,15 @@ export const DATA: FormData = {
 			changelog: "",
 		},
 	],
+
 	authors: [{ id: "", name: "Zershyan", role: "所有者" }],
-	entries: [],
+
+	/** 资料条目；没有内容物时留空数组 */
+	entries: [] as { name: string; regname: string; type: string; damage: string; stack: string }[],
+
+	/**
+	 * CurseForge 依赖关系。从 build.gradle 的 `curse.maven:<名>-<项目ID>:<文件ID>` 解析，
+	 * jarJar 内嵌与 localRuntime 的不用声明。没有就留空数组。
+	 */
+	dependencies: [] as { name: string; projectId: string; type: string }[],
 };

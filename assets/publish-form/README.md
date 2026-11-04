@@ -70,6 +70,22 @@ mcVersions: ["26.1.2", "1.21.11", "1.21.10", ...],
 
 拿不到 API 结果（没有 `CURSEFORGE_API_TOKEN`）时，省略 `mcVersions` 用兜底列表，并告诉用户版本候选未经 API 校验、需要自己核对。
 
+## 依赖关系
+
+从 `build.gradle` 的 `dependencies` 解析，写进 `data.ts` 的 `dependencies`：
+
+| 写法 | 处理 |
+|---|---|
+| `curse.maven:<名>-<项目ID>:<文件ID>` | 取项目 ID，缺名称时按 slug 补 |
+| `jarJar ...` | 内嵌打包，玩家不用另装，**不声明** |
+| `localRuntime` | 只用于开发测试，**不声明** |
+| `localImpl` / `implementation` | 通常填「必需前置」 |
+| `compileOnly` | 视情况填「可选前置」 |
+
+非 CurseForge 坐标（自己的 Maven 库、BlameJared 等）在 CF 上无法关联 projectId，只在正文或百科里说明，不写进这张表。
+
+没有依赖就留空数组。
+
 ## 版本号
 
 `modVersion` 填构建脚本里的实际 `version`，不要按统一规则拼。不同分支可能不同：

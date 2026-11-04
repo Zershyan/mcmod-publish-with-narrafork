@@ -30,7 +30,35 @@ import {
 	Title,
 	UnstyledButton,
 } from "@mantine/core";
-import { DATA, type Author, type Entry, type Version } from "./data";
+import { DATA } from "./data";
+
+type Version = {
+	modVersion: string;
+	mcVersions: string[];
+	loaders: string[];
+	releaseType: string;
+	env: string;
+	changelog: string;
+};
+type Author = { id: string; name: string; role: string };
+type Dependency = { name: string; projectId: string; type: string };
+type Entry = { name: string; regname: string; type: string; damage: string; stack: string };
+type FormData = {
+	modName: string;
+	badge: string;
+	extraLicenses?: string[];
+	mcVersions?: string[];
+	iconHint: string;
+	coverHint: string;
+	entriesEmptyText: string;
+	defaults: Record<string, any>;
+	versions: Version[];
+	authors: Author[];
+	entries: Entry[];
+	dependencies?: Dependency[];
+};
+
+const D = DATA as FormData;
 
 /** CurseForge 分类及中文对照 */
 const CF_CATEGORIES: { value: string; zh: string }[] = [
@@ -59,6 +87,11 @@ const CORE_ELEMENTS = ["实用", "科技", "魔法", "冒险", "农业", "装饰
 const ROLES = ["所有者", "开发者", "程序", "美术", "策划", "音乐", "文案", "测试", "搬运", "鸣谢"];
 const WIKI_STATUS = ["活跃", "停更", "合并", "重制", "分割"];
 const WIKI_SOURCE = ["开源", "闭源", "部分开源"];
+const DEP_TYPES = [
+	{ value: "required", label: "必需前置" },
+	{ value: "optional", label: "可选前置" },
+	{ value: "incompatible", label: "不兼容" },
+];
 const BASE_LICENSES = ["GNU AGPL 3.0", "GPL 3.0", "LGPL 3.0", "MIT", "Apache 2.0", "All Rights Reserved"];
 
 /**
@@ -92,9 +125,9 @@ const FALLBACK_MC_VERSIONS = [
 ];
 
 /** 优先用 API 拉到的完整列表，没提供时才退回兜底候选 */
-const MC_VERSIONS = DATA.mcVersions ?? FALLBACK_MC_VERSIONS;
+const MC_VERSIONS = D.mcVersions ?? FALLBACK_MC_VERSIONS;
 
-const LICENSES = Array.from(new Set([...BASE_LICENSES, ...(DATA.extraLicenses ?? [])]));
+const LICENSES = Array.from(new Set([...BASE_LICENSES, ...(D.extraLicenses ?? [])]));
 /** 除 All Rights Reserved 外都视为开源许可 */
 const isOpenSource = (license: string) => license !== "All Rights Reserved";
 
@@ -120,13 +153,14 @@ export default function App() {
 	const [distTouched, setDistTouched] = useState(false);
 	const [versionsOpen, setVersionsOpen] = useState(true);
 
-	const [versions, setVersions] = useState<Version[]>(DATA.versions);
-	const [expanded, setExpanded] = useState<boolean[]>(DATA.versions.map(() => true));
-	const [authors, setAuthors] = useState<Author[]>(DATA.authors);
+	const [versions, setVersions] = useState<Version[]>(D.versions);
+	const [expanded, setExpanded] = useState<boolean[]>(D.versions.map(() => true));
+	const [authors, setAuthors] = useState<Author[]>(D.authors);
+	const [deps, setDeps] = useState<Dependency[]>(D.dependencies ?? []);
 	const [cfIcon, setCfIcon] = useState<File | null>(null);
 	const [wCover, setWCover] = useState<File | null>(null);
 
-	const [entries, setEntries] = useState<Entry[]>(DATA.entries);
+	const [entries, setEntries] = useState<Entry[]>(D.entries);
 	const [editing, setEditing] = useState<number | null>(null);
 	const [draft, setDraft] = useState<Entry | null>(null);
 
@@ -153,7 +187,7 @@ export default function App() {
 		onChange: (val: any) => setV((s) => ({ ...s, [k]: val })),
 	});
 
-	const license = (v.cfLicense as string) ?? DATA.defaults.cfLicense;
+	const license = (v.cfLicense as string) ?? D.defaults.cfLicense;
 	const distribute =
 		v.cfDistribute === undefined ? isOpenSource(license) : Boolean(v.cfDistribute);
 	const comments = v.cfComments === undefined ? true : Boolean(v.cfComments);
@@ -215,6 +249,12 @@ export default function App() {
 	const addAuthor = () => setAuthors((list) => [...list, { id: "", name: "", role: "开发者" }]);
 	const removeAuthor = (index: number) => setAuthors((list) => list.filter((_, i) => i !== index));
 
+	const setDep = (index: number, patch: Partial<Dependency>) =>
+		setDeps((list) => list.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+	const addDep = () =>
+		setDeps((list) => [...list, { name: "", projectId: "", type: "required" }]);
+	const removeDep = (index: number) => setDeps((list) => list.filter((_, i) => i !== index));
+
 	const editEntry = (index: number) => {
 		setEditing(index);
 		setDraft({ ...entries[index] });
@@ -235,7 +275,7 @@ export default function App() {
 
 	const submit = () => {
 		const out: Record<string, any> = { 发布到百科: wiki };
-		for (const [key, fallback] of Object.entries(DATA.defaults)) {
+		for (const [key, fallback] of Object.entries(D.defaults)) {
 			const current = v[key];
 			const empty =
 				current === undefined ||
@@ -254,6 +294,7 @@ export default function App() {
 		out.versions = versions;
 		out.authors = authors;
 		out.entries = entries;
+		out.dependencies = deps;
 		(globalThis as any).genUI?.submit(
 			out,
 			wiki ? "按此配置发布到 CurseForge 与 MC百科" : "按此配置发布到 CurseForge",
@@ -292,11 +333,11 @@ export default function App() {
 				<Stack gap={2}>
 					<Title order={3}>发布配置</Title>
 					<Text size="sm" c="dimmed">
-						{DATA.modName} · {allLoaders.join(" / ")} · {allMcVersions.join(" / ")}
+						{D.modName} · {allLoaders.join(" / ")} · {allMcVersions.join(" / ")}
 					</Text>
 				</Stack>
 				<Badge variant="light" size="lg">
-					{DATA.badge}
+					{D.badge}
 				</Badge>
 			</Group>
 
@@ -332,7 +373,7 @@ export default function App() {
 								<Grid.Col span={4}>
 									<TextInput
 										label="项目名"
-										placeholder={DATA.defaults.cfName}
+										placeholder={D.defaults.cfName}
 										{...text("cfName")}
 									/>
 								</Grid.Col>
@@ -365,7 +406,7 @@ export default function App() {
 									<TextInput
 										label="简介"
 										description="1～256 字符"
-										placeholder={DATA.defaults.cfSummary}
+										placeholder={D.defaults.cfSummary}
 										{...text("cfSummary")}
 									/>
 								</Grid.Col>
@@ -373,7 +414,7 @@ export default function App() {
 									<Textarea
 										label="详细描述"
 										description="留空则按工程 README 与源码整理"
-										placeholder={DATA.defaults.cfDescription}
+										placeholder={D.defaults.cfDescription}
 										minRows={2}
 										autosize
 										{...text("cfDescription")}
@@ -385,7 +426,7 @@ export default function App() {
 										withAsterisk
 										data={CF_VALUES}
 										renderOption={cfOption}
-										placeholder={DATA.defaults.cfCategory}
+										placeholder={D.defaults.cfCategory}
 										{...pick("cfCategory")}
 									/>
 								</Grid.Col>
@@ -404,7 +445,7 @@ export default function App() {
 										"项目图标（超过 400px 自动缩放）",
 										cfIcon,
 										setCfIcon,
-										DATA.iconHint,
+										D.iconHint,
 									)}
 								</Grid.Col>
 								<Grid.Col span={5}>
@@ -423,11 +464,67 @@ export default function App() {
 									<TextInput
 										label="源码链接"
 										description="创建向导里没有这一项时，建完项目在项目设置 → Links → Source 补"
-										placeholder={DATA.defaults.cfSourceUrl}
+										placeholder={D.defaults.cfSourceUrl}
 										{...text("cfSourceUrl")}
 									/>
 								</Grid.Col>
 							</Grid>
+						</Card>
+
+						<Card withBorder shadow="sm" radius="md" p="md">
+							<Group justify="space-between" mb="sm">
+								<Group gap="xs">
+									<Text fw={600}>依赖关系</Text>
+									<Badge size="xs" variant="light" color="gray">
+										从 build.gradle 解析，内嵌与仅运行时的不声明
+									</Badge>
+								</Group>
+								<Button size="compact-sm" variant="light" onClick={addDep}>
+									+ 添加依赖
+								</Button>
+							</Group>
+							{deps.length === 0 ? (
+								<Text size="sm" c="dimmed">
+									没有需要声明的前置模组
+								</Text>
+							) : (
+								<Stack gap="sm">
+									{deps.map((dep, index) => (
+										<Group key={index} align="flex-end" gap="sm" wrap="nowrap">
+											<TextInput
+												label={index === 0 ? "模组名" : undefined}
+												placeholder="Curios"
+												value={dep.name}
+												onChange={(e) => setDep(index, { name: e.currentTarget.value })}
+												style={{ flex: 1 }}
+											/>
+											<TextInput
+												label={index === 0 ? "CF 项目 ID" : undefined}
+												placeholder="309927"
+												value={dep.projectId}
+												onChange={(e) => setDep(index, { projectId: e.currentTarget.value })}
+												style={{ flex: 1 }}
+											/>
+											<Select
+												label={index === 0 ? "关系" : undefined}
+												data={DEP_TYPES}
+												value={dep.type}
+												onChange={(val) => setDep(index, { type: val ?? "required" })}
+												style={{ flex: 1 }}
+											/>
+											<ActionIcon
+												size="lg"
+												variant="subtle"
+												color="red"
+												onClick={() => removeDep(index)}
+												aria-label="删除依赖"
+											>
+												×
+											</ActionIcon>
+										</Group>
+									))}
+								</Stack>
+							)}
 						</Card>
 
 						<Card withBorder shadow="sm" radius="md" p="md">
@@ -559,21 +656,21 @@ export default function App() {
 										<TextInput
 											label="主要名称（中文）"
 											withAsterisk
-											placeholder={DATA.defaults.wName}
+											placeholder={D.defaults.wName}
 											{...text("wName")}
 										/>
 									</Grid.Col>
 									<Grid.Col span={6}>
 										<TextInput
 											label="次要名称（英文）"
-											placeholder={DATA.defaults.wEname}
+											placeholder={D.defaults.wEname}
 											{...text("wEname")}
 										/>
 									</Grid.Col>
 									<Grid.Col span={12}>
 										<TextInput
 											label="一句话简介"
-											placeholder={DATA.defaults.wIntro}
+											placeholder={D.defaults.wIntro}
 											{...text("wIntro")}
 										/>
 									</Grid.Col>
@@ -581,14 +678,14 @@ export default function App() {
 										<TextInput
 											label="MODID"
 											withAsterisk
-											placeholder={DATA.defaults.wModid}
+											placeholder={D.defaults.wModid}
 											{...text("wModid")}
 										/>
 									</Grid.Col>
 									<Grid.Col span={6}>
 										<TextInput
 											label="CurseForge Project ID"
-											placeholder={DATA.defaults.wCfId}
+											placeholder={D.defaults.wCfId}
 											{...text("wCfId")}
 										/>
 									</Grid.Col>
@@ -597,7 +694,7 @@ export default function App() {
 											label="核心元素（单选）"
 											withAsterisk
 											data={CORE_ELEMENTS}
-											placeholder={DATA.defaults.wCore}
+											placeholder={D.defaults.wCore}
 											{...pick("wCore")}
 										/>
 									</Grid.Col>
@@ -614,7 +711,7 @@ export default function App() {
 										<Select
 											label="官方状态"
 											data={WIKI_STATUS}
-											placeholder={DATA.defaults.wStatus}
+											placeholder={D.defaults.wStatus}
 											{...pick("wStatus")}
 										/>
 									</Grid.Col>
@@ -627,7 +724,7 @@ export default function App() {
 										/>
 									</Grid.Col>
 									<Grid.Col span={4}>
-										{picker("封面（16:10）", wCover, setWCover, DATA.coverHint)}
+										{picker("封面（16:10）", wCover, setWCover, D.coverHint)}
 									</Grid.Col>
 								</Grid>
 							</Card>
@@ -653,7 +750,7 @@ export default function App() {
 											<TextInput
 												label={index === 0 ? "作者名" : undefined}
 												placeholder={
-													index === 0 ? DATA.defaults.wAuthorName ?? "作者名" : "作者名"
+													index === 0 ? D.defaults.wAuthorName ?? "作者名" : "作者名"
 												}
 												value={item.name}
 												onChange={(e) => setAuthor(index, { name: e.currentTarget.value })}
@@ -761,7 +858,7 @@ export default function App() {
 										<Textarea
 											label="相关链接"
 											description="CF 项目页会自动补，其余一行一个"
-											placeholder={DATA.defaults.wLinks}
+											placeholder={D.defaults.wLinks}
 											minRows={2}
 											autosize
 											{...text("wLinks")}
@@ -787,7 +884,7 @@ export default function App() {
 								</Group>
 								{entries.length === 0 ? (
 									<Text size="sm" c="dimmed">
-										{DATA.entriesEmptyText}
+										{D.entriesEmptyText}
 									</Text>
 								) : (
 									<Table striped highlightOnHover withTableBorder>
