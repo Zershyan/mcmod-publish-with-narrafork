@@ -28,4 +28,4 @@
 
 ## 校验
 
-`make_batch_js.py` 与 `make_create_mod_js.py` 会拦截三类问题：正文缺 `[ban:title_menu]`、表格缺 `<th>` 标题行、正文出现裸网址或缺 `title` 的超链接。浏览器直连提交时同样要在提交前自查这三项。
+`make_batch_js.py` 与 `make_create_mod_js.py` 会拦截三类问题：正文缺 `[ban:title_menu]`、表格缺 `<th>` 标题行、正文出现裸网址或缺 `title` 的超链接。手工填表时同样要在提交前自查这三项。

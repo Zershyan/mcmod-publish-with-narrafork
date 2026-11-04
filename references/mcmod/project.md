@@ -28,11 +28,7 @@ MODID 取 `neoforge.mods.toml` / `mods.toml` 的 `modId` 或 `fabric.mod.json` �
 - 封面：logo 是透明底横幅时要放到对比明显的底色上；默认让用户点「上传封面」手动选 16:10 图片，确认裁剪框覆盖整张图再点「更新封面」。
 - 最终「完成添加」交给用户点。
 
-## 浏览器直连（默认）
-
-用 `browsermcp` 打开添加页，按「基本信息 → 扩展信息 → 官方信息」逐项填写：文本字段直接 `fill`，tagsinput 与 selectpicker 用 `evaluate` 调它们自己的 API，元素/作者/链接按上面的选择器点选。设计稿正文用 `editor.setContent()` 或直接点进编辑器粘贴。
-
-## 控制台脚本（回退）
+## 控制台脚本（默认）
 
 1. 复制 [create-mod-config.example.json](create-mod-config.example.json) 到项目 `docs/mcmod/upload/mod_config.json`，改名称、简介、MODID、CF/Modrinth ID、元素、版本、链接；正文写 `intro.html`，封面 `cover.png`。
    - 正文第一段默认是 `<p>[ban:title_menu]</p>`，脚本缺了会自动补到最前面。
@@ -41,3 +37,7 @@ MODID 取 `neoforge.mods.toml` / `mods.toml` 的 `modId` 或 `fabric.mod.json` �
 3. `powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 create_mod_page.js | Set-Clipboard"` 交给用户。
 4. 用户在 `https://www.mcmod.cn/class/add/` 按 F12，Edge/Chrome 首次粘贴前要先**手动输入** `允许粘贴`（英文界面 `allow pasting`）再粘贴运行。
 5. 脚本结束会打印核对表（名称、简介、MODID、CF ID、作者）和需手动处理的警告；核对后手动上传封面、点「完成添加」。
+
+## 浏览器直连（备选）
+
+脚本某一步填不上、或需要在页面上核对填写结果时，用 `browsermcp` 打开添加页按「基本信息 → 扩展信息 → 官方信息」补：文本字段直接 `fill`，tagsinput 与 selectpicker 用 `evaluate` 调它们自己的 API，元素/作者/链接按上面的选择器点选，正文用 `editor.setContent()` 或点进编辑器粘贴。

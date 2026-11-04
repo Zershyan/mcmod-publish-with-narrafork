@@ -30,13 +30,11 @@ CurseForge 负责发行与依赖坐标，MC百科负责中文资料。两条线�
 
 CF 的 API 调用固定走 [upload_release.py](scripts/cf-http/upload_release.py)：`curl_cffi` 模拟 Chrome 指纹，规避 Cloudflare 挑战页；用 `curl`、`urllib` 或 PowerShell 直连会拿到 `Just a moment...` 的 HTML。
 
-页面操作按优先级选择：
+页面操作默认走**控制台脚本**：生成脚本交给用户在页面 F12 里运行。开浏览器、登录、翻页面成本高，能脚本化的就不开浏览器。
 
-1. `browsermcp`：操作用户已登录的真实 Chrome，无需重复登录，适合提交与核对。
-2. `Browser` 工具：独立会话，需要在页面里自行完成登录。
-3. 控制台脚本：前两者不可用、或页面拒绝自动化时，生成脚本交给用户在 F12 里运行。
-
-`scripts/mcmod/` 与 `scripts/cf-create-fill/` 的生成器服务于第 3 条，同时也是老流程的兼容回退。
+1. 控制台脚本：`scripts/mcmod/` 与 `scripts/cf-create-fill/` 的生成器，**默认路径**。
+2. `browsermcp`：脚本一步走不通、需要读页面状态核对，或用户已经在页面里操作时，用已登录的真实 Chrome 直接读写。
+3. `Browser` 工具：需要独立会话时，自行登录。
 
 ## 路由
 
@@ -57,4 +55,4 @@ CF 的 API 调用固定走 [upload_release.py](scripts/cf-http/upload_release.py
 
 - 百科作者 ID（作者页地址 `https://www.mcmod.cn/author/<ID>.html` 里的数字）与作者名，不能猜。
 - 发现同名物品、明显错译、或与已发布版本冲突时，先停下让用户决定。
-- 用浏览器直连还是生成控制台脚本。
+- 脚本走不通时，是否改用浏览器直连。

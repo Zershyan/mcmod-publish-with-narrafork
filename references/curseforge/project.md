@@ -19,18 +19,7 @@
 
 相对路径以 JSON 所在目录为基准。示例见 [project.example.json](../../scripts/cf-create-fill/project.example.json)。
 
-## 浏览器直连（默认）
-
-1. 用 `browsermcp` 打开用户已登录的作者后台，进入 Create A Project 的 General 步骤。
-2. **界面切英文，关闭 Edge 网页翻译**——翻译后标签变中文，所有字段匹配不到。
-3. 按上面的资料逐项填写：项目名、简介、Class/分类下拉、Allow Comments；上传图标后等裁剪框出现再确认。
-4. Description 步骤优先切到 Markdown 文本模式，没有就把 Markdown 转成 HTML 写进富文本编辑器（表格排版需人工复核）。
-5. License 步骤填 Project License 与 Project distribution。
-6. 每完成一步只点 Next，不点 Create；字段没填上就停在当前步骤，报告缺项。
-
-## 控制台脚本（回退）
-
-前一步走不通、或用户要求和老流程一致时用生成器：
+## 控制台脚本（默认）
 
 ```bash
 python <skill>/scripts/cf-create-fill/build_fill_js.py curseforge/cf_create_project.json
@@ -38,7 +27,19 @@ node --check curseforge/cf_create_project_fill.js
 powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 '<脚本路径>' | Set-Clipboard"
 ```
 
-脚本内嵌图标，体积约 100～150KB，不直接贴进对话。用户在 Create A Project 的 General 页按 F12，粘贴运行一次；脚本按 URL 中的 `create/general`、`create/description`、`create/license` 逐步填写并自动点 Next，有字段未填上就停在当前步骤，处理后可再运行，不会点最终的 Create。
+脚本内嵌图标，体积约 100～150KB，不直接贴进对话。用户在 Create A Project 的 General 页按 F12 粘贴运行一次；脚本按 URL 中的 `create/general`、`create/description`、`create/license` 逐步填写并自动点 Next，有字段未填上就停在当前步骤，处理后可再运行，不会点最终的 Create。
+
+**界面必须是英文，并关闭 Edge 网页翻译**——翻译后标签变中文，所有字段匹配不到。
+
+## 浏览器直连（备选）
+
+脚本某一步匹配不到字段时，用 `browsermcp` 在页面上补：
+
+1. 进入 Create A Project 的 General 步骤（界面同样保持英文）。
+2. 按上面的资料逐项填写：项目名、简介、Class/分类下拉、Allow Comments；上传图标后等裁剪框出现再确认。
+3. Description 步骤优先切到 Markdown 文本模式，没有就把 Markdown 转成 HTML 写进富文本编辑器（表格排版需人工复核）。
+4. License 步骤填 Project License 与 Project distribution。
+5. 每完成一步只点 Next，不点 Create。
 
 ## 页面结构（MUI + react-admin，2026-10-31 探针与实测）
 
