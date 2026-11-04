@@ -1,0 +1,14 @@
+{
+  "name": "Friendlier Alex's Mobs",
+  "summary": "Makes Alex's Mobs friendlier: several mobs only fight back when hurt, and fixes Dropbears, Cosmic Cod and more ruining farms. Every change is configurable.",
+  "license": "MIT",
+  "distribution": "Allow distribution to 3rd party",
+  "allowComments": true,
+  "dropdowns": [
+    ["Class", "Mods"],
+    ["Main category", "Mobs"],
+    ["Additional categories", "Server Utility"]
+  ],
+  "description": "description.md",
+  "icon": "cf-project-icon.png"
+}
