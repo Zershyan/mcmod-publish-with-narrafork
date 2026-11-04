@@ -40,9 +40,12 @@
 
 ## JAR 产物
 
-发布包在 `build/libs/${mod_id}-${mod_version}-${minecraft_version}.jar`，例如 `build/libs/hojojutsu-2.0.0-1.21.1.jar`。
+文件名前缀取自 `build.gradle` 的 `base { archivesName }`，没配置时用工程目录名：
 
-发布包名不含构建编号（包内版本号带），`buildAlpha` 例外。`build/libs/` 下如果同时有 `origin/`、`obfuscate/` 子目录，那是中间产物，不要拿来上传。
+- `archivesName = mod_id` → `build/libs/adcore-0.0.1-26.1.2+build.2.jar`
+- 未配置 → `build/libs/<目录名>-<version>.jar`
+
+发布包名不一定含构建编号。`build/libs/` 下的 `origin/`、`obfuscate/` 子目录是中间产物，不要拿来上传。多个 JAR 并存时按版本号选最新的正式包，不确定就问用户。
 
 ## 语言文件
 
