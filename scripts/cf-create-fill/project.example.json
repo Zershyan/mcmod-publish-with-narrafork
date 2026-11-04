@@ -10,5 +10,6 @@
     ["Additional categories", "Server Utility"]
   ],
   "description": "description.md",
-  "icon": "cf-project-icon.png"
+  "icon": "cf-project-icon.png",
+  "autoCreate": false
 }

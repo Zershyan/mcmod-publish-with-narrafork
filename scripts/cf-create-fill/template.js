@@ -379,10 +379,30 @@
       console.log(`%c${blocked || '有字段未填上，已停在当前步骤；处理后可再次运行脚本'}`, 'color:#c92a2a;font-weight:bold');
       break;
     }
-    // 9. 只点 Next，不点创建按钮；进入下一步后继续填写
+    // 9. 点 Next；没有 Next 说明到了最后一步
     const next = buttonByText(/^next$/);
     if (!next) {
-      console.log('%c已到最后一步：请核对全部内容，确认无误后手动点击创建按钮。', 'color:#2b8a3e;font-weight:bold');
+      if (!DATA.autoCreate) {
+        console.log('%c已到最后一步：请核对全部内容，确认无误后手动点击创建按钮。', 'color:#2b8a3e;font-weight:bold');
+        break;
+      }
+      const create = buttonByText(/^(create|submit|create project|finish|done)$/);
+      if (!create) {
+        console.log('%c到了最后一步但没找到创建按钮，请手动处理。', 'color:#c92a2a;font-weight:bold');
+        break;
+      }
+      console.log('%c正在自动创建项目…', 'color:#c92a2a;font-weight:bold');
+      create.click();
+      await sleep(2500);
+      const projectId =
+        (document.body.innerText.match(/Project\s*ID[^0-9]{0,40}(\d{4,})/i) || [])[1] || '';
+      const slug = location.pathname.split('/').filter(Boolean).pop() || '';
+      console.log('%c创建完成', 'color:#2b8a3e;font-weight:bold;font-size:14px');
+      console.log({
+        url: location.href,
+        slug,
+        projectId: projectId || '页面上没读到，请到项目设置里确认',
+      });
       break;
     }
     const before = location.hash;

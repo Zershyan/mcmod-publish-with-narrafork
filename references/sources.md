@@ -51,7 +51,7 @@
 | 次要名称（英文） | `mod_name` |
 | 一句话简介 | `mod_description` |
 | MODID | `mod_id` |
-| CurseForge Project ID | 阶段 2 建项目后得到 |
+| CurseForge Project ID | `curseforge/project.json`；没有时问用户，拿到后写回该文件 |
 | 模组元素（核心/杂项） | 询问用户 |
 | 支持平台 | 固定「JAVA版 (JAVA Edition)」 |
 | 运作方式 | 自动分辨 |

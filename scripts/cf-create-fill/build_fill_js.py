@@ -49,6 +49,8 @@ def main():
         "allowComments": config.get("allowComments", True),
         "description": description,
         "iconBase64": icon,
+        # 为 true 时脚本会自己点最后的创建按钮；默认留给人确认
+        "autoCreate": bool(config.get("autoCreate", False)),
     }
     if not 1 <= len(data["summary"]) <= 256:
         sys.exit(f"summary 长度 {len(data['summary'])}，CF 限制 256 字符")

@@ -25,9 +25,15 @@ node --check curseforge/cf_create_project_fill.js
 powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_create_project_fill.js' | Set-Clipboard"
 ```
 
-用户在 Create A Project 的 General 页按 F12 粘贴运行。脚本按 `create/general` → `create/description` → `create/license` 逐步填写并点 Next，有字段没填上就停在当前步骤，**不会点最终的 Create**。
+用户在 Create A Project 的 General 页按 F12 粘贴运行。脚本按 `create/general` → `create/description` → `create/license` 逐步填写并点 Next，有字段没填上就停在当前步骤。
 
 **界面必须是英文，并关闭 Edge 网页翻译**——翻译后标签变中文，所有字段都匹配不到。
+
+### 自动创建
+
+配置里 `"autoCreate": true` 时，脚本填完最后一步会自己点创建按钮，并打印创建后的 URL、slug，以及从页面读到的 Project ID。
+
+默认是 `false`，停在最后一步等人点。项目一创建就是对外行为，第一次建议先手动点一次核对结果，确认无误后再打开自动。
 
 脚本某步匹配不到字段时，用 `browsermcp` 在页面上补，再到 [页面结构](#页面结构) 核对选择器。
 
@@ -48,4 +54,21 @@ MUI + react-admin，实测于 2026-10-31：
 
 ## 产出
 
-记下 `projectId`（数字）和 `slug`（地址栏最后一段），阶段 3、4 直接用。
+建完项目把标识写进 `curseforge/project.json`：
+
+```json
+{ "projectId": "1757115", "slug": "caged-mobs-reborn" }
+```
+
+阶段 3、4 都从这里读；第二次发布就不用再问。开了 `autoCreate` 时脚本会打印这两个值。
+
+## 项目已存在时
+
+不用再建，但上传仍需要 `projectId`。按顺序找：
+
+1. 工程里的 `curseforge/project.json`。
+2. `curseforge/` 下的 `release-manifest.json`、`upload-result-*.json`，或 README 里记过的地址。
+3. 用户提供的项目页地址——slug 就在地址里（`.../mc-mods/<slug>`），Project ID 在页面上显示。
+4. **不要尝试自动抓取**：项目页和 `curseforge.com/api/v1/mods/search` 都被 Cloudflare 挡住，`curl_cffi` 指纹同样返回 403。直接问用户，别在这个方向反复试。
+
+slug 能从地址看出，projectId 不能，必须问用户或读页面。拿到后立刻写进 `curseforge/project.json`，下次直接读。
