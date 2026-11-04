@@ -48,3 +48,11 @@ CF 的 API 请求固定走 [upload_release.py](scripts/cf-http/upload_release.py
 ## 配置确认
 
 调研完工程后，用数据驱动的表单一次性确认所有字段，而不是逐条追问：把 [assets/publish-form](assets/publish-form/README.md) 的 `App.tsx` 和 `data.ts` 复制到 `.narrafork/gen_ui/<名称>/`，只改 `data.ts`，再用 GenUI show 出来给用户核对。工程里没有的信息（中文名、平台分类、百科作者 ID）也在表单里问。
+
+**出表单前必须先跑一次版本查询**：
+
+```bash
+python scripts/cf-http/upload_release.py query curseforge
+```
+
+把 `curseforge/game-versions.json` 里的 MC 版本号写进 `data.ts` 的 `mcVersions`，让用户从真实可用的版本里选。没有 `CURSEFORGE_API_TOKEN` 拉不到时，省略 `mcVersions` 用兜底候选，并明确告诉用户这些版本未经 API 校验。

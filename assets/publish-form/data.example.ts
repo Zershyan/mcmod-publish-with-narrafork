@@ -28,6 +28,11 @@ export type FormData = {
 	badge: string;
 	/** 项目特有许可证，追加到内置列表 */
 	extraLicenses?: string[];
+	/**
+	 * 从 CurseForge Game Versions API 拉到的 MC 版本列表，优先于模板内置候选。
+	 * 正常流程先跑 `upload_release.py query`，把返回的版本写进来；拿不到时才省略。
+	 */
+	mcVersions?: string[];
 	iconHint: string;
 	coverHint: string;
 	/** 没有资料条目时显示的说明 */

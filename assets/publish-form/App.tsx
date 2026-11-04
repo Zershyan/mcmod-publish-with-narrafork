@@ -62,10 +62,10 @@ const WIKI_SOURCE = ["开源", "闭源", "部分开源"];
 const BASE_LICENSES = ["GNU AGPL 3.0", "GPL 3.0", "LGPL 3.0", "MIT", "Apache 2.0", "All Rights Reserved"];
 
 /**
- * MC 版本候选，只是给下拉提供几个能点的选项，不追求完整、也不随新版本维护。
- * 真实版本列表由 CurseForge Game Versions API 提供，输入框允许直接填任意版本号。
+ * 兜底候选：没跑 Game Versions API 时用。
+ * 正常流程先 query 出真实版本列表写进 data.ts 的 mcVersions，这里只是应急。
  */
-const MC_VERSIONS = [
+const FALLBACK_MC_VERSIONS = [
 	"1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7", "1.21.6", "1.21.5",
 	"1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21",
 	"1.20.6", "1.20.5", "1.20.4", "1.20.3", "1.20.2", "1.20.1", "1.20",
@@ -90,6 +90,9 @@ const MC_VERSIONS = [
 	"1.1",
 	"1.0",
 ];
+
+/** 优先用 API 拉到的完整列表，没提供时才退回兜底候选 */
+const MC_VERSIONS = DATA.mcVersions ?? FALLBACK_MC_VERSIONS;
 
 const LICENSES = Array.from(new Set([...BASE_LICENSES, ...(DATA.extraLicenses ?? [])]));
 /** 除 All Rights Reserved 外都视为开源许可 */

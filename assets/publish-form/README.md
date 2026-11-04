@@ -52,6 +52,24 @@ cp assets/publish-form/data.example.ts .narrafork/gen_ui/<名称>/data.ts
 
 取值规则见 [字段来源](../../references/sources.md)。
 
+## 生成表单之前必须先拉版本
+
+MC 版本候选不该由人维护。生成表单前先拉 CurseForge 的 Game Versions：
+
+```bash
+python scripts/cf-http/upload_release.py query curseforge
+```
+
+把 `curseforge/game-versions.json` 里属于 Minecraft 的版本号提取出来，写进 `data.ts` 的 `mcVersions`：
+
+```ts
+mcVersions: ["26.1.2", "1.21.11", "1.21.10", ...],
+```
+
+模板会优先用这份列表，没有时才退回内置的兜底候选。
+
+拿不到 API 结果（没有 `CURSEFORGE_API_TOKEN`）时，省略 `mcVersions` 用兜底列表，并告诉用户版本候选未经 API 校验、需要自己核对。
+
 ## 版本号
 
 `modVersion` 填构建脚本里的实际 `version`，不要按统一规则拼。不同分支可能不同：
@@ -61,7 +79,7 @@ cp assets/publish-form/data.example.ts .narrafork/gen_ui/<名称>/data.ts
 
 按每个分支 `build.gradle` 的实际写法填。
 
-`data.ts` 里的 `mcVersions` 可以写任意版本号，包括模板下拉列表里没有的（例如 `26.1.2`）。模板里的版本候选只是给下拉提供几个能点的项，不追求完整、也不随新版本维护——真实版本列表以 CurseForge Game Versions API 为准。
+`data.ts` 里的 `mcVersions` 可以写任意版本号，包括兜底列表里没有的（例如 `26.1.2`）。输入框允许直接填任意版本号。
 
 ## 交互
 
