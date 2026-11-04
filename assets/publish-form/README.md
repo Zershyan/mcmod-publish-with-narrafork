@@ -61,6 +61,8 @@ cp assets/publish-form/data.example.ts .narrafork/gen_ui/<名称>/data.ts
 
 按每个分支 `build.gradle` 的实际写法填。
 
+`data.ts` 里的 `mcVersions` 可以写任意版本号，包括模板下拉列表里没有的（例如 `26.1.2`）。模板里的版本候选只是给下拉提供几个能点的项，不追求完整、也不随新版本维护——真实版本列表以 CurseForge Game Versions API 为准。
+
 ## 交互
 
 - 顶部勾选「同时发布到 MC百科」才出现百科页签
