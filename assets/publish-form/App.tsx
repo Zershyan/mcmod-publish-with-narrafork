@@ -795,7 +795,7 @@ export default function App() {
 											<TextInput
 												label={index === 0 ? "作者 ID" : undefined}
 												withAsterisk={index === 0}
-												placeholder="作者页地址里的数字"
+												placeholder="作者页 /author/数字.html 里的 ID"
 												value={item.id}
 												onChange={(e) => setAuthor(index, { id: e.currentTarget.value })}
 												style={{ flex: 1 }}

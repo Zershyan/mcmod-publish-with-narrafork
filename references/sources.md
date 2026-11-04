@@ -57,7 +57,7 @@
 | 运作方式 | 自动分辨 |
 | 支持 MC 版本 | `minecraft_version` |
 | 客户端/服务端 | 按注册项与 `Dist` 代码判断 |
-| 作者 ID | 询问用户（作者页地址里的数字） |
+| 作者 ID | 询问用户；搜索框只认名字，ID 要从作者页地址 `https://www.mcmod.cn/author/<ID>.html` 里取 |
 | 作者名 | `mod_authors` |
 | 职位 | 固定「所有者」（`owner`） |
 | 官方状态 | 固定「活跃」 |

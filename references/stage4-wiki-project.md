@@ -8,7 +8,7 @@
 
 - **MODID `#class-modid` 必填**，取 `mod_id`，大小写敏感。
 - **CurseForge Project ID `#class-cfprojectid` 必须填**，来自阶段 2。
-- **作者 ID 必须用户提供**：作者页地址 `https://www.mcmod.cn/author/<ID>.html` 里的数字，职位默认「所有者」。
+- **作者**：页面上的作者搜索框**只认名字，不认 ID**。搜到结果点选后会生成一行，那行的 `data-id` 才是提交用的作者 ID，也就是作者页地址 `https://www.mcmod.cn/author/<ID>.html` 里的数字。纯脚本提交拿不到这步交互，必须由用户先提供这个 ID。
 - 封面是 `logo.png` 转 16:10（最大 720×450），透明底横幅要垫对比明显的底色。
 
 工程里没有、必须问的：中文名、核心元素、杂项元素、作者 ID。
