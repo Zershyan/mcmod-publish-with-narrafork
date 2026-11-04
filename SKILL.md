@@ -44,3 +44,7 @@ CF 的 API 请求固定走 [upload_release.py](scripts/cf-http/upload_release.py
 | 百科定稿、提交脚本、资料 ID 映射 | `docs/mcmod/`（映射为 `docs/mcmod/entries.json`） |
 | CF 发布清单与上传结果 | 项目 `curseforge/` |
 | 临时导出、图标中间产物 | `build/mcmod/` |
+
+## 配置确认
+
+调研完工程后，用数据驱动的表单一次性确认所有字段，而不是逐条追问：把 [assets/publish-form](assets/publish-form/README.md) 的 `App.tsx` 和 `data.ts` 复制到 `.narrafork/gen_ui/<名称>/`，只改 `data.ts`，再用 GenUI show 出来给用户核对。工程里没有的信息（中文名、平台分类、百科作者 ID）也在表单里问。

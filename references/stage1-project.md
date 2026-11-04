@@ -29,7 +29,12 @@
 
 ## 版本
 
-工程的版本拼法是 `${mod_version}-${minecraft_version}+build.${mod_build_number}`，例如 `2.0.0-1.21.1+build.44`。
+版本显示名取构建脚本里 `version` 的实际值，不按统一规则拼。不同分支写法可能不同：
+
+- `${mod_version}-${minecraft_version}+build.${mod_build_number}`，例如 `2.0.0-1.21.1+build.44`
+- 直接 `version = mod_version`，例如 `1.20.1-1.0.1`
+
+多分支工程要逐个分支读 `gradle.properties` 与 `build.gradle`，不要拿一个分支的规则套另一个。
 
 这个字符串就是 CF 的版本显示名，不要另拼 `MC-加载器-名字-版本` 格式。
 
