@@ -39,6 +39,18 @@
     "1": "开源",
     "2": "闭源"
   },
+  "role": {
+    "owner": "所有者",
+    "programmer": "程序",
+    "artist": "美术",
+    "sound": "音效",
+    "planner": "策划",
+    "writer": "文案",
+    "builder": "建筑",
+    "contributor": "贡献者",
+    "mascot": "吉祥物",
+    "other": "自定义"
+  },
   "categoryCore": {
     "1,1": "科技",
     "1,2": "魔法",

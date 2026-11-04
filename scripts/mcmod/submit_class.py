@@ -14,7 +14,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts' / 'cf-http'))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from browser_http import requests
+from find_author import find as find_author
 
 API = 'https://event.mcmod.cn/action/edit/doEdit/'
 COOKIE_FILE = ROOT / '.narrafork' / 'mcmod-cookie.txt'
@@ -67,13 +69,22 @@ def build(cfg: dict) -> dict:
             for i, link in enumerate(cfg['links'])
         }
     if cfg.get('authors'):
-        data['author'] = {
-            'link': {
-                str(i): {'select': a.get('select', ['owner']), 'id': str(a['id'])}
-                for i, a in enumerate(cfg['authors'])
-                if a.get('id')
-            }
-        }
+        links = {}
+        for i, author in enumerate(cfg['authors']):
+            author_id = str(author.get('id') or '')
+            if not author_id and author.get('name'):
+                # 只知道名字时先查作者 ID，搜索接口免登录
+                hits = find_author(author['name'])
+                if not hits:
+                    raise SystemExit(f'找不到作者「{author["name"]}」')
+                author_id = hits[0]['id']
+                print(f'作者 {author["name"]} -> ID {author_id}')
+            if not author_id:
+                continue
+            roles = author.get('roles') or [author.get('role', '所有者')]
+            codes = [r if r in ENUMS['role'] else code_of('role', r) for r in roles]
+            links[str(i)] = {'select': codes, 'id': author_id}
+        data['author'] = {'link': links, 'add': {}}
     return {
         'action': cfg.get('action', 'class_add'),
         'edit-id': '0',
