@@ -68,6 +68,24 @@ def build(cfg: dict) -> dict:
             }
             for i, link in enumerate(cfg['links'])
         }
+    if cfg.get('license'):
+        lic = cfg['license']
+        types = lic.get('types') or [lic.get('type', '源码')]
+        type_codes = [t if t in ENUMS['licenseType'] else code_of('licenseType', t) for t in types]
+        data['license'] = {
+            '0': {
+                # 页面显示「通用」时提交空字符串
+                'title': '' if lic.get('title', '通用') in ('通用', '') else lic['title'],
+                'list': {
+                    '0': {
+                        'type': type_codes,
+                        'name': lic['name'],
+                        'link': lic.get('link', ''),
+                        'text': lic.get('text', ''),
+                    }
+                },
+            }
+        }
     if cfg.get('authors'):
         links = {}
         for i, author in enumerate(cfg['authors']):

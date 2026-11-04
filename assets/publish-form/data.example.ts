@@ -39,6 +39,8 @@ export const DATA = {
 		wCore: "LIB",
 		wExtra: [] as string[],
 		wStatus: "活跃",
+		wLicenseType: "源码",
+		wLicenseName: "ARR",
 		wAuthorName: "Zershyan",
 		wLinks: "https://github.com/Zershyan/SnowyCrescentCore",
 	},

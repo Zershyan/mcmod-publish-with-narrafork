@@ -51,6 +51,25 @@
     "mascot": "吉祥物",
     "other": "自定义"
   },
+  "licenseType": {
+    "source": "源码",
+    "asset": "资产",
+    "artifact": "构件",
+    "other": "其他"
+  },
+  "licenseName": {
+    "ARR": "All Rights Reserved（非许可协议）",
+    "MIT": "MIT",
+    "AGPL-3.0": "GNU Affero General Public License version 3",
+    "GPL-3.0": "GNU General Public License version 3",
+    "GPL-2.0": "GNU General Public License version 2",
+    "LGPL-3.0": "GNU Lesser General Public License version 3",
+    "Apache-2.0": "Apache License, Version 2.0",
+    "MPL-2.0": "Mozilla Public License 2.0",
+    "BSD-3-Clause": "3-Clause BSD License",
+    "CC-BY-4.0": "CC BY 4.0",
+    "CC-BY-SA-4.0": "CC BY-SA 4.0"
+  },
   "categoryCore": {
     "1,1": "科技",
     "1,2": "魔法",

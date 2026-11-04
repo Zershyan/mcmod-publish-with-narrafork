@@ -96,6 +96,11 @@ const LOADERS = ["NeoForge", "Forge", "Fabric"];
 const RELEASE_TYPES = ["release", "beta", "alpha"];
 const ENVS = ["双端", "仅客户端", "仅服务端"];
 const CORE_ELEMENTS = ["实用", "科技", "魔法", "冒险", "农业", "装饰", "LIB", "魔改", "辅助"];
+const LICENSE_TYPES = ["源码", "资产", "构件", "其他"];
+const LICENSE_NAMES = [
+	"ARR", "MIT", "AGPL-3.0", "GPL-3.0", "GPL-2.0", "LGPL-3.0",
+	"Apache-2.0", "MPL-2.0", "BSD-3-Clause", "CC-BY-4.0", "CC-BY-SA-4.0",
+];
 const ROLES = ["所有者", "程序", "美术", "音效", "策划", "文案", "建筑", "贡献者", "吉祥物", "自定义"];
 const WIKI_STATUS = ["不确定", "活跃", "半弃坑", "停更"];
 const WIKI_SOURCE = ["不显示", "开源", "闭源"];
@@ -831,6 +836,33 @@ export default function App() {
 										</Group>
 									))}
 								</Stack>
+							</Card>
+
+							<Card withBorder shadow="sm" radius="md" p="md">
+								<Text fw={600} mb="sm">
+									许可协议
+								</Text>
+								<Grid gutter="sm">
+									<Grid.Col span={4}>
+										<Select
+											label="协议类型"
+											data={LICENSE_TYPES}
+											placeholder={D.defaults.wLicenseType}
+											{...pick("wLicenseType")}
+										/>
+									</Grid.Col>
+									<Grid.Col span={8}>
+										<Autocomplete
+											label="协议名称"
+											data={LICENSE_NAMES}
+											placeholder={D.defaults.wLicenseName}
+											{...pick("wLicenseName")}
+										/>
+									</Grid.Col>
+								</Grid>
+								<Text size="xs" c="dimmed" mt="xs">
+									留空表示不填；ARR 表示保留所有权利。版本范围默认「通用」，提交时为空。
+								</Text>
 							</Card>
 
 							<Card withBorder shadow="sm" radius="md" p="md">
