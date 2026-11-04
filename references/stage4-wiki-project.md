@@ -8,7 +8,16 @@
 
 - **MODID `#class-modid` 必填**，取 `mod_id`，大小写敏感。
 - **CurseForge Project ID `#class-cfprojectid` 必须填**，来自阶段 2。
-- **作者**：页面上的作者搜索框**只认名字，不认 ID**。搜到结果点选后会生成一行，那行的 `data-id` 才是提交用的作者 ID，也就是作者页地址 `https://www.mcmod.cn/author/<ID>.html` 里的数字。纯脚本提交拿不到这步交互，必须由用户先提供这个 ID。
+- **作者**：页面上的作者搜索框**只认名字，不认 ID**。搜到结果点选后会生成一行，那行的 `data-id` 才是提交用的作者 ID，也就是作者页地址 `https://www.mcmod.cn/author/<ID>.html` 里的数字。
+
+  这个搜索接口免登录，可以直接查：
+
+  ```bash
+  python scripts/mcmod/find_author.py Zershyan --json
+  # → {"Zershyan": [{"id": "36340", "name": "折戏鸢", "aliases": "Zershyan / 一只戏鸢 / 戏鸢"}]}
+  ```
+
+  注意用户中心 ID（`center.mcmod.cn/<ID>/`）不是作者 ID，拿它搜会返回 `state: 109`。
 - 封面是 `logo.png` 转 16:10（最大 720×450），透明底横幅要垫对比明显的底色。
 
 工程里没有、必须问的：中文名、核心元素、杂项元素、作者 ID。
