@@ -1,6 +1,6 @@
-// __TITLE__：CurseForge 创建项目页自动填表脚本（由 build_fill_js.py 生成）
-// 用法：作者后台界面切换为英文，打开「Create A Project」页面，按 F12 打开控制台，粘贴本脚本回车
-// 脚本逐步填写并自动点 Next、确认头像裁剪框；有字段未填上时停在当前步骤；不会点击最终的创建按钮
+// __TITLE__：CurseForge 创建项目页自动填表脚本（由 create_project.py 生成）
+// 用法：作者后台界面切英文，打开「Create A Project」，F12 粘贴本脚本回车
+// 逐步填写并点 Next、确认头像裁剪框；autoCreate 为 true 时连创建按钮一起点，否则停在最后一步
 (async () => {
   const DATA = __DATA__;
   const report = [];
