@@ -75,6 +75,29 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'docs/mcmod/crea
 - `author.link` 关联已有作者（按作者页数字 ID），`author.add` 直接写名字新建。
 - 枚举取值见 [mcmod-enums.json](../assets/mcmod-enums.json)，例如 `api` 的 `13` 是 NeoForge、`status` 的 `1` 是活跃、`source` 的 `2` 是闭源。
 
+## 纯脚本提交
+
+百科没有公开 API，但登录后可以直接调 `doEdit`，不需要在页面里粘脚本。
+
+**第一步：拿 cookie。** 浏览器登录后，从 CDP 导出完整 cookie（`document.cookie` 读不到 httpOnly 的 `dSit_2132_auth`）：
+
+```bash
+python scripts/mcmod/dump_cookies_cdp.py --profile <浏览器 profile 目录> --domain mcmod.cn --out .narrafork/mcmod-cookie.txt
+```
+
+profile 目录里有 `DevToolsActivePort` 文件，第一行是调试端口。用 NarraFork 的 `Browser` 工具 launch 一个 headed 会话时，profile 形如 `%TEMP%\puppeteer_dev_chrome_profile-*`。
+
+**第二步：构造并提交。**
+
+```bash
+python scripts/mcmod/submit_class.py <配置.json> --dry-run   # 先看提交体
+python scripts/mcmod/submit_class.py <配置.json>             # 真正提交
+```
+
+配置里写页面上的中文文本，脚本按 [mcmod-enums.json](../assets/mcmod-enums.json) 转成代码值。`state: 0` 表示成功并返回条目地址。
+
+cookie 过期后重复第一步。**这条链路尚未实测成功提交**（2026-11 只验证到接口返回 117、构造体与浏览器一致），首次使用先 `--dry-run` 核对再提交。
+
 ## 产出
 
 记下百科模组 ID（资料添加页地址 `/item/add/<模组ID>/` 里的数字），阶段 5 要用。
