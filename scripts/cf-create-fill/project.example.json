@@ -11,5 +11,5 @@
   ],
   "description": "description.md",
   "icon": "cf-project-icon.png",
-  "autoCreate": false
+  "autoCreate": true
 }
