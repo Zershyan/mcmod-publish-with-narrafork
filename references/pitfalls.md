@@ -48,7 +48,7 @@
 
 ### 版本名格式搞错
 
-**症状**：CF 上显示成 `1.21.1-NeoForge-ADCore-0.0.1`，和工程里的版本对不上。
+**症状**：CF 上显示成 `1.21.1-NeoForge-模组名-0.0.1`，和工程里的版本对不上。
 
 **原因**：按「MC-加载器-名字-版本」自己拼了。
 
@@ -60,7 +60,7 @@
 
 **原因**：以为文件名一定是 `${mod_id}-${version}.jar`。
 
-**做法**：看 `build.gradle` 的 `base { archivesName }`。ADCore 配了 `archivesName = mod_id`，产物是 `adcore-…`；没配时用工程目录名。
+**做法**：看 `build.gradle` 的 `base { archivesName }`。配了 `archivesName = mod_id` 时产物前缀是 modid（`adcore-…`），没配时用工程目录名。
 
 ### 依赖漏声明
 
@@ -74,7 +74,7 @@
 
 ### tagsinput 直接改 `value` 不生效
 
-**症状**：`$('#class-modid').val('adcore')` 之后，页面显示空，提交时 MODID 也是空。
+**症状**：`$('#class-modid').val('<你的 modid>')` 之后，页面显示空，提交时 MODID 也是空。
 
 **原因**：`#class-modid`、`#class-cfprojectid`、`#class-mrprojectid`、`#class-tags`、`#class-keys` 是 bootstrap-tagsinput，原 input 被 `display:none`，页面不认直接赋值。
 
@@ -96,11 +96,11 @@
 
 ### 作者搜不到
 
-**症状**：用 `853680` 搜作者，返回 `state: 109` 找不到。
+**症状**：拿一个数字 ID 搜作者，返回 `state: 109` 找不到。
 
-**原因**：`853680` 是用户中心 ID（`center.mcmod.cn/853680/`），不是作者 ID。搜索框只认名字。
+**原因**：用户中心 ID（`center.mcmod.cn/<ID>/`）不是作者 ID，两者不同。搜索框只认名字。
 
-**做法**：用名字搜，从结果行取 `data-id`。Zershyan 的作者 ID 是 `36340`。
+**做法**：用名字搜，从结果行取 `data-id`，那个才是提交用的作者 ID。
 
 ### 拿到的 cookie 用不了
 

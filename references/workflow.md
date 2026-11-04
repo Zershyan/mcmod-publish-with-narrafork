@@ -1,121 +1,200 @@
 # 完整流程
 
-七个步骤，按顺序走。每一步都写清了判定条件和失败后的处理。
+七个步骤，每一步都写了判定条件、动作、产物和失败处理。SKILL.md 是执行顺序，这里是细节。
 
 ## 1. 读工程事实
 
-从工程文件里读，不猜。字段对应见 [字段来源](field-sources.md)。
+**动作**
 
-```
-gradle.properties   mod_id / mod_name / mod_version / mod_license /
-                    mod_authors / mod_description / minecraft_version
-build.gradle        加载器（neo_version 还是 forge_version）、version 计算方式、
-                    java toolchain、依赖坐标、base.archivesName
-分支                多分支工程要逐个分支读，版本号规则可能不同
-语言文件            src/generated/resources 或 src/main/resources 下的 lang
-logo                src/main/resources/logo.png
+```bash
+cat gradle.properties
+grep -nE "^version|archivesName|toolchain|JavaLanguageVersion|id 'net\." build.gradle
+git branch -a && git remote -v
+ls src/main/resources/logo.png
 ```
 
-读完先汇报一张事实表，缺的标出来问用户。
+**要拿到**：modid、英文名、版本号、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 命名规则、语言文件位置。
 
-工程里拿不到、必须问的只有四类：中文名、CF 主分类、百科模组元素、百科作者。
+**多分支工程逐个分支读**。`version` 的计算方式可能完全不同：
 
-## 2. 拉版本标签
+- `${mod_version}-${minecraft_version}+build.${n}` → `2.0.0-1.21.1+build.44`
+- 直接 `version = mod_version` → `1.20.1-1.0.1`
+
+**产物**：一张事实表，汇报给用户，缺的标出来。
+
+## 2. 判断走哪条路
+
+**动作**
+
+```bash
+cat curseforge/project.json 2>/dev/null
+```
+
+| 结果 | 下一步 |
+|---|---|
+| 有文件 | 用里面的 `projectId` 和 `slug`，跳到第 3 步 |
+| 没有 | 问用户「这个模组在 CurseForge 上有现成项目吗」 |
+| 用户说没有 | 走建项目流程（第 5.1 步） |
+| 用户说有 | 要项目页地址：slug 从地址取，Project ID 从页面抄 |
+
+**不要把「发布」当成「同意建项目」**。建项目是独立授权，动手前单独问一次项目名、分类、许可证。
+
+**产物**：`curseforge/project.json`
+
+```json
+{ "projectId": "1234567", "slug": "my-mod" }
+```
+
+## 3. 拉版本标签
 
 ```bash
 python scripts/cf/upload.py query curseforge
 ```
 
-写到 `curseforge/game-versions.json`。版本标签的 ID 只从这里取，不凭记忆写。
+**产物**：`curseforge/game-versions.json`
 
-拉不到（没令牌）时不要硬试，直接进入第 3 步并告诉用户版本标签尚未校验。
+拿不到（没令牌）就跳过，并告诉用户版本标签尚未校验。
 
-## 3. 确认配置
+## 4. 出配置表单
 
-出表单让用户核对，不要逐条追问：
+按场景选模板：
 
-```
-assets/form-full/      首次发布
-assets/form-release/   只发新版本
-```
+| 场景 | 模板 |
+|---|---|
+| 第一次发布，要给 CF 和百科建全部信息 | `assets/form-full/` |
+| 已有项目，只发新版本 | `assets/form-release/` |
 
-做法：复制模板到 `.narrafork/gen_ui/<名称>/`，只改 `data.ts`，GenUI show 出来。
-
-表单里所有调研值放在 placeholder（灰色提示），用户留空就按提示值执行。**枚举类字段要实选**，否则用户看不出会提交什么。
-
-用户提交表单后，把结果落成两份配置：
-
-```
-curseforge/release-manifest.json   CF 上传用
-docs/mcmod/mod-config.json         百科提交用
+```bash
+mkdir -p .narrafork/gen_ui/publish
+cp assets/form-full/App.tsx .narrafork/gen_ui/publish/App.tsx
+cp assets/form-full/data.example.ts .narrafork/gen_ui/publish/data.ts
 ```
 
-## 4. CF 发版
+改 `data.ts`，GenUI show 该目录。**只改 data.ts，不动 App.tsx**。
 
-两条前置：
+**产物**：
 
-1. 有没有 `curseforge/project.json`？没有就先建项目
-2. 令牌在不在？不在就给用户链接等回复
+```
+curseforge/release-manifest.json   每个「MC 版本 × 加载器」一条
+docs/mcmod/mod-config.json         百科提交配置
+```
 
-**建项目**（仅在需要时）：
+## 5. CurseForge
+
+### 5.1 建项目（仅在需要时）
 
 ```bash
 python scripts/cf/create_project.py curseforge/cf_create_project.json
+node --check curseforge/cf_create_project_fill.js
+powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_create_project_fill.js' | Set-Clipboard"
 ```
 
-生成控制台脚本，用户在 Create A Project 页面 F12 运行。脚本按 General → Description → License 填完并点 Next；`autoCreate` 为 true 时连创建按钮一起点。
+用户在 Create A Project 页面 F12 粘贴运行。**界面必须切英文、关闭浏览器翻译**。
 
-**动手前必须单独问一次**项目名、分类、许可证，拿到同意再生成脚本。
+`autoCreate` 默认 true，脚本会自己点创建并读回 `projectId`/`slug`。启用前必须单独确认一次。
 
-完成后把 `projectId` 和 `slug` 写进 `curseforge/project.json`。
+失败时跑 `scripts/cf/dom_probe.js` 抓页面结构再改模板。
 
-**发版本**：
+### 5.2 确认（建议）
+
+版本多或第一次发布时，用 `assets/form-confirm/` 把将要上传的内容整块给用户看一遍。
+
+### 5.3 上传
 
 ```bash
-python scripts/cf/upload.py upload curseforge/release-manifest.json --project-id <ID> --slug <slug>
+python scripts/cf/upload.py upload curseforge/release-manifest.json \
+  --project-id <ID> --slug <slug>
 ```
 
-三层去重：本地 `upload-result-*.json` → 线上文件列表按 displayName → 遗留的 `upload-attempt-*.json` 拒绝重传。
+脚本自动三层去重：本地 `upload-result-*.json` → 线上文件列表按 displayName → 遗留的 `upload-attempt-*.json` 拒绝重传。
 
-返回文件 ID 只代表上传被受理，不是过审。
+**产物**：`curseforge/upload-result-<版本>.json`（含文件 ID 和链接）
 
-## 5. 百科（可选）
+返回文件 ID 只代表受理，不是过审。
 
-用户勾了才做。三步：检查 cookie → 建/查条目 → 提交资料。详见 [MC百科](mcmod.md)。
+## 6. MC百科（用户勾选才做）
 
-**cookie 是第一道门**。没有就按三层回退：CDP 导出 → 控制台脚本 → 让用户手动粘贴。
+### 6.1 拿 cookie
 
-**已有条目时先比对差异**，不要整条重提。对比维度：名称、简介、元素、支持版本、作者、正文、资料条目数量。
+```bash
+ls .narrafork/mcmod-cookie.txt
+```
 
-## 6. 核对审核
+按顺序回退：
 
-用户把退回附言贴过来，按资料 ID 找到条目再改。地址：
+| 条件 | 做法 |
+|---|---|
+| 有 `Browser` 工具 | launch 可见会话 → 用户登录 → `cookies.py dump` |
+| 没有 `Browser` | 出控制台脚本让用户 F12 跑 |
+| 都不行 | 让用户手工复制 cookie 贴过来 |
+
+**验证码**：百科登录页有图形验证码，账号密码纯脚本走不通；QQ 登录必须人工扫码。两种都要用户参与。
+
+验证 cookie：
+
+```bash
+python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run
+```
+
+能打印 JSON 就有效。
+
+### 6.2 判断百科是否已有条目
+
+已有条目时**不要整条重提**，先对比：
+
+| 对比项 | 变化时怎么办 |
+|---|---|
+| 名称、简介、元素 | 走再编辑 |
+| 支持版本 / 运作方式 | 更新版本组合 |
+| 作者、链接、许可证 | 按实际改 |
+| 正文 | 有实质改动才改 |
+| 资料条目数量 | 新增物品才补条目 |
+
+没有条目就直接新建。
+
+### 6.3 提交
+
+需要验证码，取图和提交必须连着做：
+
+```bash
+python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha-url
+# 把 .narrafork/mcmod-captcha.png 给用户看
+python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
+```
+
+验证码每次请求都刷新，中间不要请求添加页（脚本已用缓存规避）。
+
+**产物**：`docs/mcmod/entries.json`（模组 ID 与资料 ID 映射）
+
+## 7. 核对审核
 
 ```
+审核列表      https://www.mcmod.cn/verify.html?order=createtime&selfonly=1
 已通过再编辑  /item/edit/<资料ID>/
 待审再编辑    /item/add/<模组ID>-<资料ID>/
-审核列表      https://www.mcmod.cn/verify.html?order=createtime&selfonly=1
 ```
 
-## 各步骤的产物
+用户把退回附言贴过来，按资料 ID 定位条目再改。常见退回原因见 [MC百科](mcmod.md#审核)。
 
-| 步骤 | 产物 |
-|---|---|
-| 1 | 事实表（汇报给用户） |
-| 2 | `curseforge/game-versions.json` |
-| 3 | `curseforge/release-manifest.json`、`docs/mcmod/mod-config.json` |
-| 4 | `curseforge/project.json`、`upload-result-*.json` |
-| 5 | `docs/mcmod/entries.json`（资料 ID 映射） |
-| 6 | 修正后的条目 |
+## 数据在步骤之间怎么传
+
+```
+curseforge/project.json          projectId + slug
+curseforge/game-versions.json    版本标签
+curseforge/release-manifest.json 上传清单
+curseforge/upload-result-*.json  文件 ID 与链接
+docs/mcmod/mod-config.json       百科提交配置
+docs/mcmod/entries.json          条目 ID 映射
+.narrafork/mcmod-cookie.txt      百科登录态
+.narrafork/mcmod-mcversions.json 版本 ID 缓存
+```
 
 ## 中途停下来问用户的情况
 
-只在这几种情形停：
-
-- 缺 `CURSEFORGE_API_TOKEN`，或需要新建 CF 项目
-- 工程里读不到的四类信息（中文名、分类、元素、作者）
-- 百科需要登录或填验证码
+- 缺令牌、缺 cookie，且所有回退都不可用
+- 需要新建 CF 项目
+- 四类工程里读不到的信息（中文名、CF 分类、百科元素、百科作者名）
 - 线上已有同名条目但内容不同
-- 某个「MC 版本 × 加载器」找不到对应的 JAR
+- 某个「MC 版本 × 加载器」找不到对应 JAR
 
-其余情况自己往下走，不要每步都确认。
+其余情况自己往下走。

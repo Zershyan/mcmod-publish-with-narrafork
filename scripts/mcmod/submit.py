@@ -21,7 +21,10 @@ from author import find as find_author
 
 API = 'https://event.mcmod.cn/action/edit/doEdit/'
 ADD_PAGE = 'https://www.mcmod.cn/class/add/'
+CAPTCHA_URL = 'https://www.mcmod.cn/frame/edit/EditCaptcha/?id=class_add_0'
 COOKIE_FILE = ROOT / '.narrafork' / 'mcmod-cookie.txt'
+VERSION_CACHE = ROOT / '.narrafork' / 'mcmod-mcversions.json'
+CAPTCHA_FILE = ROOT / '.narrafork' / 'mcmod-captcha.png'
 ENUMS = json.loads((ROOT / 'assets' / 'mcmod-enums.json').read_text(encoding='utf-8'))
 # 添加页内嵌全部 MC 版本：var arrMCVer = $.parseJSON('[{"id":"78","name":"26.1.2"},…]')
 MC_VERSION_PATTERN = re.compile(r"arrMCVer\s*=\s*\$\.parseJSON\('(\[.*?\])'\)", re.S)
@@ -42,6 +45,28 @@ def fetch_mc_versions(session) -> dict[str, str]:
     if not match:
         raise SystemExit('添加页里没找到 MC 版本列表，登录态可能已失效')
     return {item['name']: item['id'] for item in json.loads(match.group(1))}
+
+
+def cached_mc_versions(session, refresh: bool = False) -> dict[str, str]:
+    """缓存版本映射：提交时不再请求添加页，否则会刷新验证码。"""
+    if not refresh and VERSION_CACHE.exists():
+        return json.loads(VERSION_CACHE.read_text(encoding='utf-8'))
+    versions = fetch_mc_versions(session)
+    VERSION_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    VERSION_CACHE.write_text(json.dumps(versions, ensure_ascii=False, indent=1), encoding='utf-8')
+    return versions
+
+
+def grab_captcha(session) -> Path:
+    """取一张新的验证码图片。每次请求都会刷新，取完必须紧接着提交。"""
+    session.get(ADD_PAGE, timeout=30)
+    response = session.get(CAPTCHA_URL, timeout=30, headers={'Referer': ADD_PAGE})
+    if response.status_code >= 400 or not response.content:
+        raise SystemExit(f'取验证码失败：HTTP {response.status_code}')
+    CAPTCHA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    CAPTCHA_FILE.write_bytes(response.content)
+    print(f'验证码已保存：{CAPTCHA_FILE}（{len(response.content)} 字节）')
+    return CAPTCHA_FILE
 
 
 def code_of(group: str, label: str) -> str:
@@ -164,11 +189,25 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('config')
     parser.add_argument('--dry-run', action='store_true', help='只打印提交体，不发送')
+    parser.add_argument('--captcha-url', action='store_true',
+                        help='取一张验证码图片后退出，不提交')
+    parser.add_argument('--captcha', help='提交时附带的验证码')
     args = parser.parse_args()
 
     cfg = json.loads(Path(args.config).read_text(encoding='utf-8'))
     session = make_session()
-    payload = build(cfg, fetch_mc_versions(session))
+
+    if args.captcha_url:
+        # 取图时会重新加载添加页，版本映射一并刷新并缓存
+        cached_mc_versions(session, refresh=True)
+        grab_captcha(session)
+        print('把图片给用户识别，拿到验证码后带 --captcha 重跑，中间不要再请求添加页')
+        return
+
+    # 走缓存，避免提交前请求添加页把验证码刷掉
+    payload = build(cfg, cached_mc_versions(session))
+    if args.captcha:
+        payload['captcha'] = args.captcha
     print(json.dumps(payload, ensure_ascii=False, indent=1))
 
     if args.dry_run:
@@ -179,6 +218,8 @@ def main():
     print('\n返回：', json.dumps(result, ensure_ascii=False))
     if result.get('state') == 0:
         print('提交成功：', result.get('url', '(无地址)'))
+    elif result.get('state') == 117 and 'captcha' not in payload:
+        raise SystemExit('state=117 且没有带验证码，可能是缺验证码；先跑 --captcha-url 取图')
     else:
         raise SystemExit(f'提交失败：state={result.get("state")}')
 

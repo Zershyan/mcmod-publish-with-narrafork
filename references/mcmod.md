@@ -74,7 +74,7 @@ data=<URL 编码的 JSON>
     "keys":      { "0": "关键词" },
     "link":   { "0": { "title": "curseforge", "custom": "", "href": "地址", "text": "" } },
     "license": { "0": { "title": "", "list": { "0": { "type": ["source"], "name": "AGPL-3.0", "link": "", "text": "" } } } },
-    "author": { "link": { "0": { "select": ["owner"], "id": "36340" } }, "add": {} }
+    "author": { "link": { "0": { "select": ["owner"], "id": "<作者ID>" } }, "add": {} }
   }
 }
 ```
@@ -130,25 +130,41 @@ input[name="class-mcversion-13"]   NeoForge
 ```
 POST https://www.mcmod.cn/object/CommonSelect/
 data={"key":"作者名","type":"author"}
-→ {"state":0,"html":"<tr data-id=\"36340\"><td><b>折戏鸢</b> - <i>Zershyan / …</i></td></tr>"}
+→ {"state":0,"html":"<tr data-id=\"<作者ID>\"><td><b>主要名</b> - <i>别名1 / 别名2</i></td></tr>"}
 ```
 
 ```bash
-python scripts/mcmod/author.py Zershyan
+python scripts/mcmod/author.py <作者名>
 ```
 
 `state:109` 表示没找到。**搜索框只认名字**，用户中心 ID（`center.mcmod.cn/<ID>/`）不是作者 ID，拿它搜会返回 109。
 
 ## 提交
 
-```bash
-python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run   # 先看提交体
-python scripts/mcmod/submit.py docs/mcmod/mod-config.json             # 真提交
+**百科提交需要图形验证码**，纯脚本也躲不过：
+
 ```
+输入框  #edit-captcha-value
+图片    https://www.mcmod.cn/frame/edit/EditCaptcha/?id=class_add_0
+```
+
+验证码每次请求都会刷新，所以必须「取图 → 用户识别 → 立刻提交」一气呵成，中间不能再去请求添加页。
+
+```bash
+# 1. 取图（同时缓存版本映射，避免提交时再请求添加页）
+python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha-url
+
+# 2. 把 .narrafork/mcmod-captcha.png 给用户看，拿到字符
+
+# 3. 带验证码提交
+python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
+```
+
+没有验证码时可先 `--dry-run` 只看提交体。
 
 配置里写页面上的中文文本，脚本按枚举表转成代码值。`state: 0` 成功并返回条目地址。
 
-首次使用先 `--dry-run` 核对，再提交。
+**尚未验证的部分**：用错误验证码提交返回的是 `117`（和「数据有问题」同一个码），说明验证码校验在数据校验之后，或者两者混用同一个状态码。所以第一次真提交时如果返回 117，先怀疑数据字段，再怀疑验证码。
 
 ## 资料条目
 
