@@ -1,0 +1,23 @@
+{
+  "name": "模组中文名（询问用户）",
+  "ename": "ModName（mod_name）",
+  "intro": "一句话简介（mod_description）",
+  "modid": "modid（mod_id）",
+  "cfprojectid": "CurseForge 项目 ID（阶段 2 产出）",
+  "core": "核心元素（询问用户）",
+  "elements": ["杂项元素（询问用户）"],
+  "platforms": ["JAVA版 (JAVA Edition)"],
+  "versions": {"NeoForge": ["1.21.1"]},
+  "links": [
+    ["curseforge", "https://www.curseforge.com/minecraft/mc-mods/<slug>", ""],
+    ["github", "https://github.com/<user>/<repo>", ""]
+  ],
+  "client": "需装",
+  "server": "需装",
+  "status": "活跃",
+  "source": "闭源",
+  "authors": [{"id": 0, "name": "<百科作者名，id 填作者页地址里的数字>", "roles": ["owner"]}],
+  "content_file": "intro.html",
+  "cover_file": "cover.png",
+  "injectCover": false
+}
