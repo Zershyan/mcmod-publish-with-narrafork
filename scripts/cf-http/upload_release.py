@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from browser_http import requests, system_proxy
+from browser_http import requests, system_env, system_proxy
 from curl_cffi import CurlMime
 
 BASE = 'https://minecraft.curseforge.com/api'
@@ -26,7 +26,7 @@ parser.add_argument('--slug')
 parser.add_argument('--proxy', help='覆盖系统代理，形如 127.0.0.1:端口')
 args = parser.parse_args()
 
-token = os.environ.get('CURSEFORGE_API_TOKEN')
+token = system_env('CURSEFORGE_API_TOKEN')
 if not token:
     raise SystemExit('Missing CURSEFORGE_API_TOKEN')
 

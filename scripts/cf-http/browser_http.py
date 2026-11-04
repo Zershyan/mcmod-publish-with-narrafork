@@ -16,6 +16,21 @@ except ImportError as error:
     raise SystemExit(f'curl_cffi not found; install with: {hint}') from error
 
 
+def system_env(name):
+    """读取环境变量；Windows 上当前进程没有时回退到用户环境变量，避免新开终端没继承 setx 的设置。"""
+    value = os.environ.get(name)
+    if value:
+        return value
+    if sys.platform != 'win32':
+        return None
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Environment') as handle:
+            return winreg.QueryValueEx(handle, name)[0]
+    except OSError:
+        return None
+
+
 # 读取系统代理（形如 127.0.0.1:端口）：先看 HTTPS_PROXY/HTTP_PROXY 环境变量，Windows 上再读系统代理设置，都没有时返回 None
 def system_proxy():
     for name in ('HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy'):
