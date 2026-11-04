@@ -70,6 +70,7 @@ export const DATA = {
 	/** 资料条目；没有内容物时留空数组。分类取 ENTRY_CATEGORIES 里的值 */
 	entries: [] as {
 		name: string;
+		ename: string;
 		regname: string;
 		category: string;
 		type: string;

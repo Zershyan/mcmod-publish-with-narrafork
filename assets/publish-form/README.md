@@ -44,6 +44,8 @@ cp assets/publish-form/data.example.ts .narrafork/gen_ui/<名称>/data.ts
 | `wIntro` | 一句话简介 |
 | `wModid` | MODID |
 | `wCfId` | CF Project ID |
+| `wMrId` | Modrinth Project ID，没有就留空 |
+| `wRelations` | 模组关系，代码联动的前置或附属 |
 | `wCore` | 核心元素 |
 | `wExtra` | 杂项元素 |
 | `wStatus` | 官方状态 |
@@ -69,6 +71,30 @@ mcVersions: ["26.1.2", "1.21.11", "1.21.10", ...],
 模板会优先用这份列表，没有时才退回内置的兜底候选。
 
 拿不到 API 结果（没有 `CURSEFORGE_API_TOKEN`）时，省略 `mcVersions` 用兜底列表，并告诉用户版本候选未经 API 校验、需要自己核对。
+
+## 版本条目
+
+| 字段 | 内容 |
+|---|---|
+| `modVersion` | 构建脚本里的实际 `version` |
+| `mcVersions` | 该版本支持的 MC 版本，可多个 |
+| `loaders` | 加载器，可多个 |
+| `javaVersion` | CF 版本标签里的 Java 版本，取 `java.toolchain.languageVersion` |
+| `releaseType` | release / beta / alpha |
+| `env` | 双端 / 仅客户端 / 仅服务端，CF 的 Client/Server 标签由它推导 |
+| `changelog` | 留空则按 git 提交记录整理 |
+
+## 资料条目
+
+| 字段 | 内容 |
+|---|---|
+| `name` | 中文名，取自 `zh_cn.json` |
+| `ename` | 英文名，取自 `en_us.json` |
+| `regname` | 注册名 `modid:path` |
+| `category` | 百科资料分类，10 种之一（物品/方块、生物/实体、BUFF/DEBUFF 等） |
+| `type` | 资料类型，按用途判断（道具、装备:武器 等） |
+| `damage` | 最大耐久 |
+| `stack` | 最大堆叠 |
 
 ## 依赖关系
 

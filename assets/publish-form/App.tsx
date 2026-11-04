@@ -46,6 +46,8 @@ type Author = { id: string; name: string; role: string };
 type Dependency = { name: string; projectId: string; type: string };
 type Entry = {
 	name: string;
+	/** 百科次要名称，取自 en_us.json */
+	ename: string;
 	regname: string;
 	/** 百科资料分类，取值见 ENTRY_CATEGORIES */
 	category: string;
@@ -293,6 +295,7 @@ export default function App() {
 	const addEntry = () => {
 		const created: Entry = {
 			name: "",
+			ename: "",
 			regname: "",
 			category: "物品/方块",
 			type: "道具",
@@ -967,6 +970,9 @@ export default function App() {
 													</Table.Td>
 													<Table.Td>
 														<Text size="sm">{entry.name || "未命名"}</Text>
+														<Text size="xs" c="dimmed">
+															{entry.ename}
+														</Text>
 													</Table.Td>
 													<Table.Td>
 														<Text size="sm">{entry.category}</Text>
@@ -1105,6 +1111,12 @@ export default function App() {
 							label="名称"
 							value={draft.name}
 							onChange={(e) => setDraft({ ...draft, name: e.currentTarget.value })}
+						/>
+						<TextInput
+							label="次要名称（英文）"
+							placeholder="取自 en_us.json"
+							value={draft.ename}
+							onChange={(e) => setDraft({ ...draft, ename: e.currentTarget.value })}
 						/>
 						<TextInput
 							label="注册名"
