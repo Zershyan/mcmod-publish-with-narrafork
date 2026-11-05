@@ -8,9 +8,14 @@ import io
 import os
 import sys
 import urllib.error
+from pathlib import Path
 
-# curl_cffi 的安装目录：设了 CF_HTTP_RUNTIME 就优先从那里加载
+# curl_cffi 的安装目录：CF_HTTP_RUNTIME 优先，其次工程里的 .narrafork/pylibs
 _RUNTIME = os.environ.get('CF_HTTP_RUNTIME')
+if not _RUNTIME:
+    local = Path.cwd() / '.narrafork' / 'pylibs'
+    if (local / 'curl_cffi').is_dir():
+        _RUNTIME = str(local)
 if _RUNTIME and _RUNTIME not in sys.path:
     sys.path.insert(0, _RUNTIME)
 

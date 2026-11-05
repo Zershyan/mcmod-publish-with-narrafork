@@ -33,7 +33,15 @@ type Release = {
 };
 
 type FormData = {
-	project: { name: string; projectId: string; slug: string };
+	project: {
+		name: string;
+		projectId: string;
+		slug: string;
+		/** 项目还没建时，确认后会先建再传 */
+		category?: string;
+		license?: string;
+		pending?: boolean;
+	};
 	releases: Release[];
 	/** 百科提交内容；不发百科时留空 */
 	wiki?: {
@@ -100,6 +108,39 @@ export default function App() {
 
 				<Tabs.Panel value="cf">
 					<Stack gap="md">
+						<Card withBorder shadow="sm" radius="md" p="md">
+							<Group justify="space-between" mb="xs">
+								<Text fw={600}>CurseForge 项目</Text>
+								{D.project.pending ? (
+									<Badge color="orange" variant="light">待创建</Badge>
+								) : (
+									<Badge color="teal" variant="light">已存在</Badge>
+								)}
+							</Group>
+							<Grid gutter="sm">
+								<Grid.Col span={6}>
+									<Text size="xs" c="dimmed">项目名</Text>
+									<Text size="sm">{D.project.name}</Text>
+								</Grid.Col>
+								<Grid.Col span={6}>
+									<Text size="xs" c="dimmed">slug</Text>
+									<Text size="sm">{D.project.slug || "建好后确认"}</Text>
+								</Grid.Col>
+								<Grid.Col span={6}>
+									<Text size="xs" c="dimmed">分类</Text>
+									<Text size="sm">{D.project.category || "未填"}</Text>
+								</Grid.Col>
+								<Grid.Col span={6}>
+									<Text size="xs" c="dimmed">许可证</Text>
+									<Text size="sm">{D.project.license || "未填"}</Text>
+								</Grid.Col>
+							</Grid>
+							{D.project.pending && (
+								<Text size="xs" c="orange" mt="xs">
+									确认后先创建项目，再上传下列文件
+								</Text>
+							)}
+						</Card>
 						{releases.map((release, index) => (
 							<Card key={index} withBorder shadow="sm" radius="md" p="md">
 								<Group justify="space-between" mb="sm">

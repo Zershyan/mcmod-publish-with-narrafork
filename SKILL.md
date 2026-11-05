@@ -49,7 +49,7 @@ cp assets/forms/FormBuild.data.example.ts .narrafork/gen_ui/build/data.ts
 
 拿到提交结果（`JSON.parse(values.payload)`）后再动手：
 
-- 勾了「回填至项目」→ `python scripts/project/version.py master=0.0.1 1.21.1=1.0.0`
+- 勾了「回填至项目」→ `python scripts/project/version.py main=0.0.1 1.20.1=0.0.1 --commit`。**多分支必须加 `--commit`**：git 不允许带着未提交的 `gradle.properties` 切分支，不提交就只有第一个分支改得动
 - **自己跑 `./gradlew build`**，绝不跑 `buildAlpha`（后者递增编号并回写属性，属开发动作）
 - 构建失败就如实报告停下，不要改用 `buildAlpha` 绕过
 
@@ -65,14 +65,12 @@ cat curseforge/project.json 2>/dev/null || echo "无记录"
 |---|---|
 | 有记录 | 直接用里面的 `projectId` / `slug`，跳到第 3 步 |
 | 无记录 | 问用户「这个模组在 CurseForge 上有现成项目吗？」 |
-| 用户说没有 | 先建项目，见 [建项目](references/curseforge.md#项目创建) |
+| 用户说没有 | **记成「待建」，先不动手**，项目名/分类/许可证由第 4 步表单收集，第 5 步确认后再建 |
 | 用户说有 | 要项目页地址：从地址取 slug，从页面抄 Project ID，写进 `project.json` |
 
 **不要自己去 CurseForge 搜项目**，公开页有 Cloudflare 人机校验。
 
-建项目前必须单独问一次项目名、分类、许可证。「发个版本」不等于「同意新建项目」。
-
-脚本优先用 browsermcp 在用户已登录的 Chrome 里跑，没有 MCP 才回落人工粘贴。
+建项目是唯一不可逆的动作，所以它排在第 5 步 `FormConfirm` 之后：用户确认清单时才一并授权。脚本优先用 browsermcp 在用户已登录的 Chrome 里跑，没有 MCP 才回落人工粘贴。
 
 ## 第 3 步：版本标签
 
@@ -98,11 +96,28 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 - 已有项目只发新版本时改用 `assets/forms/FormRelease.tsx`
 - 字段说明见 [表单模板](assets/forms/README.md)
 
+### 占位图标
+
+工程没有图标时用它，样式可以在表单面板里调：
+
+1. 出表单前先读 skill 的 `.narrafork/icon-style.json`，有内容就填进 `data.ts` 的 `iconStyle`
+2. 用户在图标那行点「编辑样式」打开面板：左侧实时预览，右侧两行文本、两行排版开关、字体（Segoe UI / Arial / Calibri / Impact / Bahnschrift / Georgia / Consolas）、字号、行距、字距、对齐、全部大写、边框、导出尺寸、文字色与背景色
+3. 用户点「保存为默认」会发来一条 `保存图标样式：{…}`，把里面的 JSON 写回 `.narrafork/icon-style.json`，下次发布其他模组直接复用
+4. 提交结果里带 `cfAutoIcon` 与 `cfIconStyle`，勾着且工程确实没有图标时生成 PNG：
+
+```bash
+python scripts/project/make_icon.py <模组英文名> --out src/main/resources/logo.png
+```
+
+样式文件会被自动读取；要临时覆盖就加 `--font georgiab.ttf --font-size 56 --fg "#3b1f0e"` 这类参数，加 `--save-style` 则一并写回配置。多行用 `--lines "Forge|Attachment"`。
+
 没收到提交结果（超时、被中断、用户关掉）＝还没确认：不构建、不上传、不提交百科，也不要发普通消息问一遍来代替等待。
 
 ### 提交结果怎么变成清单
 
-表单返回 `{"payload": "<JSON 字符串>"}`，还原后存成 `.narrafork/gen_ui/publish/payload.json`，再：
+表单返回 `{"payload": "<JSON 字符串>"}`，还原后存成 `.narrafork/gen_ui/publish/payload.json`。
+
+里面 `changed` **只装用户改过的字段**，没改的沿用 `data.ts` 里的默认值——把两者合并成完整配置再往下走。不整份回传是因为工具显示层会截断长内容，几千字的描述一塞进去，后面的字段就看不见了。
 
 ```bash
 python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \
@@ -111,9 +126,22 @@ python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \
 
 它按工程实际情况挑包、算 sha256、拼 `displayName`（= jar 文件名去掉 `.jar`）与 `gameVersions`。**不要手写 manifest**。
 
-## 第 5 步：上传
+## 第 5 步：确认，然后建项目、上传
 
-版本多或第一次发布时，先用 `assets/forms/FormConfirm.tsx`（同样 `render({path, wait: true})`）把清单给用户过一遍。
+**先过 `FormConfirm`**——它是整个流程唯一的确认点。清单里要有项目名、分类、许可证、项目是否待建、每个要上传的文件：
+
+```bash
+mkdir -p .narrafork/gen_ui/confirm
+cp assets/forms/FormConfirm.tsx .narrafork/gen_ui/confirm/App.tsx
+cp assets/forms/FormConfirm.data.example.ts .narrafork/gen_ui/confirm/data.ts
+# 改 data.ts 后
+# GenUI render({path: '.narrafork/gen_ui/confirm', wait: true})
+```
+
+用户提交后才动手，顺序固定：
+
+1. `project.json` 不存在 → 按 [建项目](references/curseforge.md#项目创建) 建，拿到 `projectId` / `slug`
+2. 上传：
 
 ```bash
 python scripts/cf/upload.py upload curseforge/release-manifest.json \
@@ -206,8 +234,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 只有这几种情况停，其余自己往下走：
 
 - preflight 里的 ✗ 补不上（令牌、依赖、cookie）
-- 要新建 CF 项目
-- 工程里读不到的四类信息：中文名、CF 分类、百科模组元素、百科作者名
+- 工程里读不到的四类信息：中文名、CF 分类、百科模组元素、百科作者名（能放进表单的一律放进表单问）
 - 需要验证码或登录凭据
 - 线上已有同名条目但内容不同
 - 某个「MC 版本 × 加载器」组合找不到 JAR

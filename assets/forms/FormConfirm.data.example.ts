@@ -8,6 +8,10 @@ export const DATA = {
 		name: "模组英文名",
 		projectId: "0000000",
 		slug: "project-slug",
+		/** 项目还没建时填这三项，确认后会先建再传 */
+		category: "API and Library",
+		license: "MIT",
+		pending: false,
 	},
 
 	/** 一个「MC 版本 × 加载器」一条；displayName 就是 artifact 文件名去掉 .jar */

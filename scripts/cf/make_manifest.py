@@ -15,13 +15,30 @@ from pathlib import Path
 SIDES = {'双端': ['Client', 'Server'], '客户端': ['Client'], '服务端': ['Server']}
 
 
+def read_properties() -> dict:
+    path = Path('gradle.properties')
+    values = {}
+    if path.exists():
+        for line in path.read_text(encoding='utf-8', errors='replace').splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                values[key.strip()] = value.strip()
+    return values
+
+
 def jar_prefix() -> str:
+    """archivesName 可能带引号、引用属性，也可能根本没配。"""
     build = Path('build.gradle')
     if build.exists():
-        found = re.search(r'archivesName\s*=\s*["\']([^"\']+)["\']',
-                          build.read_text(encoding='utf-8', errors='replace'))
+        text = build.read_text(encoding='utf-8', errors='replace')
+        found = re.search(r'archivesName\s*=\s*([^\s;/]+)', text)
         if found:
-            return found.group(1)
+            value = found.group(1).strip('"\'')
+            reference = re.fullmatch(r'\$\{?(\w+)\}?', value)
+            if reference:
+                value = reference.group(1)
+            return read_properties().get(value, value)
     return Path.cwd().name
 
 

@@ -55,7 +55,15 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 见文件内注释。核心是 `defaults`（各字段的 placeholder，即调研值）和 `versions` / `authors` / `entries` / `dependencies`。
 
+图标那一行右侧有「没有就自动生成」勾选框和「编辑样式」按钮。面板里左侧是实时预览，右侧可改：两行文本、两行排版开关、字体、字号、行距、字距、对齐、全部大写、边框、导出尺寸（128/256/400/512）、文字色与背景色。
+
+预览用 DOM + CSS 排版（flex 垂直居中、`lineHeight` 控行距、`letterSpacing` 控字距），和最终 PNG 的排版参数一一对应。
+
+提交结果里是 `cfAutoIcon` 与 `cfIconStyle`；点「保存为默认」会把样式以消息发给 agent，存进 skill 的 `.narrafork/icon-style.json`，下次换模组直接复用。生成用 `scripts/project/make_icon.py`。
+
 `versions[].modVersion` 填 `gradle.properties` 里的 `mod_version`（如 `0.0.1`），**不要填 Gradle `version`**，也不带 MC 版本与 `+build.N`。发布时的显示名由 `make_manifest.py` 按 jar 文件名生成。
+
+提交结果里 `changed` 只装用户改过的字段，其余沿用 `defaults` 的值——工具显示层会截断长内容，整份回传会让后面的字段消失。
 
 ### FormRelease.data.example.ts
 

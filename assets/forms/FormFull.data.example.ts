@@ -16,6 +16,24 @@ export const DATA = {
 	mcVersions: [] as string[],
 	iconHint: "默认 logo.png（64×64）",
 	coverHint: "logo 仅 64×64，需放大加底色",
+	/** 默认勾选「没有图标就自动生成」：白底黑字写模组英文名 */
+	autoIcon: true,
+	/** 占位图标样式；agent 从 skill 的 .narrafork/icon-style.json 读出来后填这里 */
+	iconStyle: {
+		font: "segoeuib.ttf",
+		lines: ["auto"],
+		stacked: true,
+		fontSize: 56,
+		lineGap: 1.12,
+		letterSpacing: 0,
+		align: "center",
+		uppercase: false,
+		border: 0,
+		padding: 0.04,
+		fg: "#111111",
+		bg: "#ffffff",
+		canvas: 400,
+	},
 	/** 没有资料条目时显示的说明 */
 	entriesEmptyText: "本项目是纯库模组，语言文件里没有物品、方块与实体，百科资料条目会自动跳过。",
 

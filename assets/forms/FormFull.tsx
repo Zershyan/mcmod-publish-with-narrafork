@@ -12,13 +12,16 @@ import {
 	Button,
 	Card,
 	Checkbox,
+	ColorInput,
 	FileButton,
 	Grid,
 	Group,
 	Input,
 	Modal,
 	MultiSelect,
+	SegmentedControl,
 	Select,
+	Slider,
 	Stack,
 	Switch,
 	Table,
@@ -55,6 +58,69 @@ type Entry = {
 	damage: string;
 	stack: string;
 };
+type IconStyle = {
+	font: string;
+	lines: string[];
+	stacked: boolean;
+	fontSize: number;
+	lineGap: number;
+	letterSpacing: number;
+	align: string;
+	uppercase: boolean;
+	border: number;
+	padding: number;
+	fg: string;
+	bg: string;
+	canvas: number;
+};
+
+const DEFAULT_ICON_STYLE: IconStyle = {
+	font: "segoeuib.ttf",
+	lines: ["auto"],
+	stacked: true,
+	fontSize: 56,
+	lineGap: 1.12,
+	letterSpacing: 0,
+	align: "center",
+	uppercase: false,
+	border: 0,
+	padding: 0.04,
+	fg: "#111111",
+	bg: "#ffffff",
+	canvas: 400,
+};
+
+/** 与 make_icon.py 的 FONTS 一一对应；css 用于 canvas 近似预览 */
+const ICON_FONTS = [
+	{ value: "segoeuib.ttf", label: "Segoe UI Bold", css: "Segoe UI" },
+	{ value: "arialbd.ttf", label: "Arial Bold", css: "Arial" },
+	{ value: "calibrib.ttf", label: "Calibri Bold", css: "Calibri" },
+	{ value: "impact.ttf", label: "Impact", css: "Impact" },
+	{ value: "bahnschrift.ttf", label: "Bahnschrift", css: "Bahnschrift" },
+	{ value: "georgiab.ttf", label: "Georgia Bold", css: "Georgia" },
+	{ value: "consolab.ttf", label: "Consolas Bold", css: "Consolas" },
+];
+
+/** ForgeAttachment → Forge / Attachment，和 make_icon.py 的拆词一致 */
+const splitWords = (name: string) =>
+	name.match(/[A-Z]+(?![a-z])|[A-Z][a-z]+|[a-z]+|\d+/g) ?? [name];
+
+const autoLines = (name: string) => {
+	const words = splitWords(name);
+	if (words.length < 2) return [name];
+	const mid = Math.ceil(words.length / 2);
+	return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+};
+
+const resolveLines = (style: IconStyle, name: string) => {
+	let lines =
+		style.lines.length === 1 && style.lines[0] === "auto" ? autoLines(name) : style.lines;
+	if (!style.stacked) lines = [lines.join(" ")];
+	return lines
+		.filter(Boolean)
+		.map((line) => (style.uppercase ? line.toUpperCase() : line));
+};
+
 type FormData = {
 	modName: string;
 	badge: string;
@@ -62,6 +128,10 @@ type FormData = {
 	mcVersions?: string[];
 	iconHint: string;
 	coverHint: string;
+	/** 默认是否勾选「没有图标就自动生成」 */
+	autoIcon?: boolean;
+	/** 占位图标样式，通常由 agent 从 skill 的 .narrafork/icon-style.json 读出来填在这里 */
+	iconStyle?: IconStyle;
 	entriesEmptyText: string;
 	defaults: Record<string, any>;
 	versions: Version[];
@@ -195,6 +265,26 @@ export default function App() {
 	const [authors, setAuthors] = useState<Author[]>(D.authors);
 	const [deps, setDeps] = useState<Dependency[]>(D.dependencies ?? []);
 	const [cfIcon, setCfIcon] = useState<File | null>(null);
+	const [autoIcon, setAutoIcon] = useState(D.autoIcon ?? true);
+	const [iconOpen, setIconOpen] = useState(false);
+	const [iconStyle, setIconStyle] = useState<IconStyle>({ ...DEFAULT_ICON_STYLE, ...(D.iconStyle ?? {}) });
+
+	const iconFont = ICON_FONTS.find((f) => f.value === iconStyle.font) ?? ICON_FONTS[0];
+	/** 编辑框里显示原始两行，不应用大写与合并 */
+	const rawLines =
+		iconStyle.lines.length === 1 && iconStyle.lines[0] === "auto"
+			? autoLines(D.modName)
+			: iconStyle.lines;
+	const iconLines = resolveLines(iconStyle, D.modName);
+	const editIconLine = (index: number, value: string) =>
+		setIconStyle((s) => {
+			const base =
+				s.lines.length === 1 && s.lines[0] === "auto" ? autoLines(D.modName) : s.lines;
+			const next = [base[0] ?? "", base[1] ?? ""];
+			next[index] = value;
+			return { ...s, lines: next };
+		});
+
 	const [wCover, setWCover] = useState<File | null>(null);
 
 	const [entries, setEntries] = useState<Entry[]>(D.entries);
@@ -319,29 +409,37 @@ export default function App() {
 	const removeEntry = (index: number) => setEntries((list) => list.filter((_, i) => i !== index));
 
 	const submit = () => {
-		const out: Record<string, any> = { wiki };
+		// 只回传用户改过的字段：全量回传会被工具显示层截断，长描述尤其容易撑爆
+		const changed: Record<string, any> = {};
 		for (const [key, fallback] of Object.entries(D.defaults)) {
 			const current = v[key];
 			const empty =
 				current === undefined ||
 				current === "" ||
 				(Array.isArray(current) && current.length === 0);
-			out[key] = empty ? fallback : current;
+			const value = empty ? fallback : current;
+			if (JSON.stringify(value) !== JSON.stringify(fallback)) changed[key] = value;
 		}
-		out.cfDistribute = distribute;
-		out.cfComments = comments;
-		out.cfIcon = cfIcon?.name ?? "src/main/resources/logo.png";
-		out.wCover = wCover?.name ?? "src/main/resources/logo.png";
-		out.wSource = (v.wSource as string) ?? derivedSource;
-		out.wikiTargets = targets;
-		out.wTags = indexed(out.wTags);
-		out.wKeys = indexed(out.wKeys);
-		out.wClient = (v.wClient as string) ?? derivedClient;
-		out.wServer = (v.wServer as string) ?? derivedServer;
-		out.versions = versions;
-		out.authors = authors;
-		out.entries = entries;
-		out.dependencies = deps;
+		const out = {
+			wiki,
+			changed,
+			cfDistribute: distribute,
+			cfComments: comments,
+			cfIcon: cfIcon?.name ?? "src/main/resources/logo.png",
+			cfAutoIcon: autoIcon,
+			cfIconStyle: iconStyle,
+			wCover: wCover?.name ?? "src/main/resources/logo.png",
+			wSource: (v.wSource as string) ?? derivedSource,
+			wikiTargets: targets,
+			wTags: indexed(v.wTags),
+			wKeys: indexed(v.wKeys),
+			wClient: (v.wClient as string) ?? derivedClient,
+			wServer: (v.wServer as string) ?? derivedServer,
+			versions,
+			authors,
+			entries,
+			dependencies: deps,
+		};
 		(globalThis as any).genUI?.submit(
 			{ payload: JSON.stringify(out) },
 			wiki ? "按此配置发布到 CurseForge 与 MC百科" : "按此配置发布到 CurseForge",
@@ -357,7 +455,7 @@ export default function App() {
 		</Group>
 	);
 
-	const picker = (label: string, value: File | null, onChange: any, hint: string) => (
+	const picker = (label: string, value: File | null, onChange: any, hint: string, extra?: any) => (
 		<Input.Wrapper label={label}>
 			<Group gap="xs" h={36} align="center" wrap="nowrap">
 				<FileButton onChange={onChange} accept="image/png,image/jpeg">
@@ -367,6 +465,7 @@ export default function App() {
 						</Button>
 					)}
 				</FileButton>
+				{extra}
 				<Text size="xs" c="dimmed" truncate>
 					{value ? value.name : hint}
 				</Text>
@@ -493,6 +592,22 @@ export default function App() {
 										cfIcon,
 										setCfIcon,
 										D.iconHint,
+										<Group gap="xs" wrap="nowrap">
+											<Checkbox
+												size="xs"
+												label="没有就自动生成"
+												checked={autoIcon}
+												onChange={(e) => setAutoIcon(e.currentTarget.checked)}
+											/>
+											<Button
+												size="compact-xs"
+												variant="subtle"
+												disabled={!autoIcon}
+												onClick={() => setIconOpen(true)}
+											>
+												编辑样式
+											</Button>
+										</Group>,
 									)}
 								</Grid.Col>
 								<Grid.Col span={5}>
@@ -1212,6 +1327,159 @@ export default function App() {
 						</Group>
 					</Stack>
 				)}
+			</Modal>
+
+			<Modal opened={iconOpen} onClose={() => setIconOpen(false)} title="占位图标样式" size="lg">
+				<Stack gap="sm">
+					<Group align="flex-start" gap="lg" wrap="nowrap">
+						<Stack gap={4} align="center">
+							<Box
+								style={{
+									width: 256,
+									height: 256,
+									background: iconStyle.bg,
+									display: "flex",
+									alignItems: "center",
+									justifyContent:
+										iconStyle.align === "left"
+											? "flex-start"
+											: iconStyle.align === "right"
+												? "flex-end"
+												: "center",
+									outline: "1px solid rgba(128,128,128,0.25)",
+									overflow: "hidden",
+								}}
+							>
+								<Box
+									style={{
+										fontFamily: `"${iconFont.css}", sans-serif`,
+										fontWeight: iconStyle.font === "impact.ttf" ? 400 : 700,
+										fontSize: iconStyle.fontSize * (256 / iconStyle.canvas),
+										lineHeight: iconStyle.lineGap,
+										letterSpacing: iconStyle.letterSpacing * (256 / iconStyle.canvas),
+										color: iconStyle.fg,
+										textAlign: iconStyle.align as "center" | "left" | "right",
+										textTransform: iconStyle.uppercase ? "uppercase" : "none",
+										border: iconStyle.border
+											? `${iconStyle.border * (256 / iconStyle.canvas)}px solid ${iconStyle.fg}`
+											: undefined,
+										padding: iconStyle.border ? 6 : 0,
+									}}
+								>
+									{iconLines.map((line, index) => (
+										<div key={index}>{line}</div>
+									))}
+								</Box>
+							</Box>
+							<Text size="xs" c="dimmed">
+								{iconFont.label} · {iconStyle.fontSize}px · 行距 {iconStyle.lineGap.toFixed(2)} ·
+								输出 {iconStyle.canvas}×{iconStyle.canvas}
+							</Text>
+						</Stack>
+
+						<Stack gap="xs" style={{ flex: 1 }}>
+							<TextInput
+								label="第一行"
+								value={rawLines[0] ?? ""}
+								onChange={(e) => editIconLine(0, e.currentTarget.value)}
+							/>
+							<TextInput
+								label="第二行"
+								value={rawLines[1] ?? ""}
+								onChange={(e) => editIconLine(1, e.currentTarget.value)}
+							/>
+							<Switch
+								label="两行排版"
+								checked={iconStyle.stacked}
+								onChange={(e) => setIconStyle((s) => ({ ...s, stacked: e.currentTarget.checked }))}
+							/>
+							<Select
+								label="字体"
+								data={ICON_FONTS}
+								value={iconStyle.font}
+								allowDeselect={false}
+								onChange={(value) => setIconStyle((s) => ({ ...s, font: value ?? s.font }))}
+							/>
+						</Stack>
+					</Group>
+
+					<Group grow align="flex-start">
+						<Input.Wrapper label={`字号 ${iconStyle.fontSize}px`}>
+							<Slider min={16} max={160} step={1} value={iconStyle.fontSize}
+								onChange={(value) => setIconStyle((s) => ({ ...s, fontSize: value }))} />
+						</Input.Wrapper>
+						<Input.Wrapper label={`行距 ${iconStyle.lineGap.toFixed(2)}`}>
+							<Slider min={0.8} max={2.2} step={0.05} value={iconStyle.lineGap}
+								onChange={(value) => setIconStyle((s) => ({ ...s, lineGap: value }))} />
+						</Input.Wrapper>
+						<Input.Wrapper label={`字距 ${iconStyle.letterSpacing}px`}>
+							<Slider min={-3} max={12} step={0.5} value={iconStyle.letterSpacing}
+								onChange={(value) => setIconStyle((s) => ({ ...s, letterSpacing: value }))} />
+						</Input.Wrapper>
+					</Group>
+
+					<Group grow align="flex-end">
+						<Input.Wrapper label="对齐">
+							<SegmentedControl
+								data={[
+									{ value: "center", label: "居中" },
+									{ value: "left", label: "左" },
+									{ value: "right", label: "右" },
+								]}
+								value={iconStyle.align}
+								onChange={(value) => setIconStyle((s) => ({ ...s, align: value }))}
+							/>
+						</Input.Wrapper>
+						<Select
+							label="导出尺寸"
+							data={["128", "256", "400", "512"]}
+							value={String(iconStyle.canvas)}
+							allowDeselect={false}
+							onChange={(value) => setIconStyle((s) => ({ ...s, canvas: Number(value) }))}
+						/>
+					</Group>
+
+					<Group grow>
+						<ColorInput label="文字色" format="hex" value={iconStyle.fg}
+							onChange={(value) => setIconStyle((s) => ({ ...s, fg: value }))} />
+						<ColorInput label="背景色" format="hex" value={iconStyle.bg}
+							onChange={(value) => setIconStyle((s) => ({ ...s, bg: value }))} />
+					</Group>
+
+					<Group grow align="center">
+						<Switch
+							label="全部大写"
+							checked={iconStyle.uppercase}
+							onChange={(e) => setIconStyle((s) => ({ ...s, uppercase: e.currentTarget.checked }))}
+						/>
+						<Input.Wrapper label={`边框 ${iconStyle.border}px`}>
+							<Slider min={0} max={20} step={1} value={iconStyle.border}
+								onChange={(value) => setIconStyle((s) => ({ ...s, border: value }))} />
+						</Input.Wrapper>
+					</Group>
+
+					<Group justify="space-between">
+						<Button size="xs" variant="default" onClick={() => setIconStyle({ ...DEFAULT_ICON_STYLE })}>
+							恢复默认
+						</Button>
+						<Group gap="xs">
+							<Button
+								size="xs"
+								variant="default"
+								onClick={() =>
+									(globalThis as any).genUI?.sendPrompt(
+										`保存图标样式：${JSON.stringify(iconStyle)}`,
+									)
+								}
+							>
+								保存为默认
+							</Button>
+							<Button size="xs" onClick={() => setIconOpen(false)}>
+								应用
+							</Button>
+						</Group>
+					</Group>
+				</Stack>
 			</Modal>
 		</Box>
 	);

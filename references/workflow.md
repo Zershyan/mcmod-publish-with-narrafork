@@ -40,12 +40,10 @@ cat curseforge/project.json 2>/dev/null
 |---|---|
 | 有文件 | 用里面的 `projectId` 和 `slug`，跳到第 3 步 |
 | 没有 | 问用户「这个模组在 CurseForge 上有现成项目吗」 |
-| 用户说没有 | 走建项目流程（第 5.1 步） |
+| 用户说没有 | 记成「待建」，**先不动手**；项目信息由第 4 步表单收集，第 5 步 FormConfirm 确认后再建 |
 | 用户说有 | 要项目页地址：slug 从地址取，Project ID 从页面抄 |
 
-**不要把「发布」当成「同意建项目」**。建项目是独立授权，动手前单独问一次项目名、分类、许可证。
-
-**产物**：`curseforge/project.json`
+**产物**：`curseforge/project.json`（建完才有）
 
 ```json
 { "projectId": "1234567", "slug": "my-mod" }
@@ -101,7 +99,20 @@ python scripts/cf/make_manifest.py payload.json --out curseforge/release-manifes
 
 ## 5. CurseForge
 
-### 5.1 建项目（仅在需要时）
+### 5.1 确认（必经）
+
+`FormConfirm` 是整个流程唯一的确认点，把项目名、分类、许可证、项目是否待建、每个要上传的文件整块摆给用户：
+
+```bash
+mkdir -p .narrafork/gen_ui/confirm
+cp assets/forms/FormConfirm.tsx .narrafork/gen_ui/confirm/App.tsx
+cp assets/forms/FormConfirm.data.example.ts .narrafork/gen_ui/confirm/data.ts
+# 改 data.ts 后 GenUI render({path: '.narrafork/gen_ui/confirm', wait: true})
+```
+
+提交后才动手，顺序固定：建项目 → 上传。
+
+### 5.2 建项目（仅在需要时）
 
 ```bash
 python scripts/cf/create_project.py curseforge/cf_create_project.json
@@ -116,13 +127,9 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_c
 
 两种方式都要求**界面切英文、关闭浏览器翻译**。脚本体积主要来自图标 base64，MCP `eval` 传不动时加 `--no-icon` 出瘦脚本，图标另行上传。
 
-`autoCreate` 默认 true，脚本会自己点创建并读回 `projectId`/`slug`。启用前必须单独确认一次。
+`autoCreate` 默认 true，脚本会自己点创建并读回 `projectId`/`slug`——FormConfirm 已经确认过内容，不需要再问一遍。
 
 失败时跑 `scripts/cf/dom_probe.js` 抓页面结构再改模板。
-
-### 5.2 确认（建议）
-
-版本多或第一次发布时，用 `assets/forms/FormConfirm.tsx` 把将要上传的内容整块给用户看一遍。
 
 ### 5.3 上传
 

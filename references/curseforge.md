@@ -84,6 +84,8 @@ EOF
 
 ## 项目创建
 
+**建项目排在 `FormConfirm` 之后**——项目名、分类、许可证在确认表单里一并给用户过目，确认后脚本才动手。它是整条流程里唯一不可逆的动作。
+
 CF 没有建项目的 API，只能网页填表：生成一段控制台脚本，在**已登录的作者后台**里执行。
 
 ```bash
@@ -142,7 +144,7 @@ python scripts/cf/create_project.py curseforge/cf_create_project.json --no-icon
 python scripts/cf/create_project.py curseforge/cf_create_project.json --no-icon --step
 ```
 
-`autoCreate` 默认 true，脚本会自己点创建按钮并读回 `projectId`/`slug`。**启用前必须用交互式提问单独确认一次**项目名、分类、许可证。
+`autoCreate` 默认 true，脚本会自己点创建按钮并读回 `projectId`/`slug`——表单已经确认过内容，不需要再问一遍。想自己按最后一下，就在配置里把 `autoCreate` 设成 false。
 
 失败时跑 `scripts/cf/dom_probe.js` 抓页面结构，按实际结构改模板。
 

@@ -30,7 +30,7 @@
 | 项目名 | `mod_name` |
 | 简介 | `mod_description`，1～256 字符 |
 | 详细描述 | 按 README 与源码整理 |
-| 图标 | `src/main/resources/logo.png`，没有则问用户 |
+| 图标 | `src/main/resources/logo.png`；没有时按表单勾选项用 `make_icon.py` 生成占位图（样式读 skill 的 `.narrafork/icon-style.json`，可在表单弹窗里调），没勾就问用户 |
 | Class | 固定 `Mods` |
 | 主分类 | **问用户** |
 | 附加分类 | **问用户** |

@@ -34,7 +34,7 @@ scripts/
   cf/                CurseForge：请求封装、上传、清单生成、建项目脚本生成
   mcmod/             百科：cookie、作者查询、条目提交
   mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
-  project/           工程侧：把版本号写进各分支的 gradle.properties
+  project/           工程侧：版本号回填、占位图标生成（样式存 .narrafork/icon-style.json）
 ```
 
 百科按当前环境选通道，从上往下试：**有 browsermcp** 直接在页面里跑 `console.py` 生成的控制台脚本（浏览器自带登录态，不需要 cookie）；**有 `Browser` 工具**就登录后 dump cookie，走 `submit.py` 本地提交；**都没有**就把脚本给用户，自己 F12 粘贴。
