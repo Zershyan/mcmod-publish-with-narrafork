@@ -9,7 +9,7 @@ description: 把 Minecraft 模组发布到 CurseForge 与 MC百科。读工程�
 
 本文是操作手册，按顺序执行。每步都写了「怎么判断」和「失败怎么办」。
 
-## 开始前：确认三个前置
+## 开始前：确认四个前置
 
 按顺序检查，缺哪个补哪个，不要跳过。
 
@@ -47,6 +47,19 @@ python -m pip install --target .narrafork/pylibs curl_cffi websocket-client
 
 之后所有脚本都要带 `CF_HTTP_RUNTIME` 和 `PYTHONPATH` 指向这个目录。
 
+**4. GenUI 工具**
+
+流程里要出表单时（第 1 步的分支版本、第 4 步的配置、上传前确认），**一律用 GenUI 生成**，不许自己用文字或普通消息逐项问。
+
+表单统一用 `render` 带 `wait: true`：有模板就 `render({path, wait: true})`，简单只读确认可以内联 `render({wait: true, source})`。**`show` 不支持 `wait`**，画完就能接着跑，流程里不要用。
+
+当前环境没有 `GenUI` 工具时按顺序处理，不要静默降级：
+
+1. 用交互式提问问用户：「当前环境没有 GenUI，要不要回退成逐项询问？」
+2. 选「是」→ 逐项问，仍然用交互式提问，不要发普通消息等回复
+3. 选「否」→ 再检查一次 GenUI 是否可用（看工具列表里有没有恢复）
+4. 恢复了照常出表单；仍然不可用就说明卡在哪、结束会话（停下，不再往下跑），不要拿逐项询问顶上
+
 ---
 
 ## 第 1 步：读工程事实
@@ -61,7 +74,7 @@ git remote -v
 ls src/main/resources/logo.png
 ```
 
-要拿到：modid、英文名、版本号、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 路径规则、语言文件位置。
+要拿到：modid、英文名、`mod_version`、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 路径规则、语言文件位置。
 
 **先判断工程装没装 `zershyan-mcmod-style`**：
 
@@ -82,13 +95,13 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 ```
 
-用 `assets/forms/FormBuild.tsx` 出表单，让用户逐行填分支和 `mod_version`。用户在表单里勾了「回填至项目」的话，先用 `scripts/project/version.py` 把版本号写进各分支的 `gradle.properties`。
+用 `assets/forms/FormBuild.tsx` 出表单，让用户逐行填分支和 `mod_version`。用 `render({path, wait: true})` 打开它，提交结果回来才继续，没拿到不要开始构建（见第 4 步）。用户在表单里勾了「回填至项目」的话，先用 `scripts/project/version.py` 把版本号写进各分支的 `gradle.properties`。
 
 然后**自己在各分支跑 `./gradlew build`**，用产出的正式包继续。
 
 **只能跑 `build`，绝不能跑 `buildAlpha`**：前者沿用已记录的编号、不改工程状态；后者会递增 `mod_build_number` 并回写 `gradle.properties`，那是开发动作。构建失败时如实报告并停下来，不要改用 `buildAlpha` 绕过。
 
-多分支工程**逐个分支读**，版本号规则可能不一样。
+多分支工程**逐个分支读** `gradle.properties`，`mod_version` 与 `minecraft_version` 可能不一样。
 
 读完汇报一张表，缺的标出来。工程里永远拿不到的只有四类：**中文名、CF 分类、百科模组元素、百科作者名**。
 
@@ -119,7 +132,7 @@ python scripts/cf/upload.py query curseforge
 
 ## 第 4 步：出配置表单让用户确认
 
-不要逐条追问，一次性给全：
+不要逐条追问，一次性给全。**表单必须用 GenUI 生成**；没有这个工具时按开始前的第 4 条走回退链，不要自己改成逐项问。
 
 ```bash
 mkdir -p .narrafork/gen_ui/publish
@@ -129,22 +142,35 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 
 改 `.narrafork/gen_ui/publish/data.ts`，把第 1 步拿到的事实填进 `defaults`（作为 placeholder）和 `versions`。
 
-然后 `GenUI show .narrafork/gen_ui/publish`。
+然后 `GenUI render({path: '.narrafork/gen_ui/publish', wait: true})`。它会停在表单上，直到用户点提交、把结果直接交回来。
+
+没收到提交结果（超时、被中断或用户关掉表单）＝还没确认：不构建、不上传、不提交百科，也不要再发一条普通消息问一遍来替代等待。用户迟迟不提交，就报告停在哪一步，不要自己挑默认值继续。
+
+**不要用 `GenUI show`**——它只画界面，不阻塞，画完就能接着往下跑。只读确认清单这类没有联动的，也可以直接内联 `render({ wait: true, source })`，不必建目录。
 
 表单是数据驱动的，**只改 `data.ts`，不要改 `App.tsx`**（GenUI 只认这个文件名）。字段说明见 [表单模板](assets/forms/README.md)。
 
-用户提交后，把结果落成：
+用户提交后，拿到的值是 `{"payload": "<JSON 字符串>"}`，先 `JSON.parse` 还原，再落成：
 
 ```
 curseforge/release-manifest.json   CF 上传清单
 docs/mcmod/mod-config.json         百科提交配置
 ```
 
+每个版本条目的 `displayName` 和 `artifact` 是同一个名字：
+
+```
+displayName : <modid>-<mod_version>-<mc版本>    例 examplemod-0.0.1-1.21.1
+artifact    : build/libs/<displayName>.jar
+```
+
+`modid` 取 `archivesName`，没配时用工程目录名。表单里那一栏是 `mod_version`（`0.0.1`），整串 `displayName` 由你在写 manifest 时拼，不要让用户填。
+
 已有项目只发新版本时，改用 `assets/forms/FormRelease.tsx`。
 
 ## 第 5 步：上传到 CurseForge
 
-版本多、或第一次发布时，先用 `assets/forms/FormConfirm.tsx` 把将要上传的内容整块给用户确认一遍。只有一个版本且用户刚在 FormRelease 里确认过可以跳过。
+版本多、或第一次发布时，先用 `assets/forms/FormConfirm.tsx` 把将要上传的内容整块给用户确认一遍（同样 `render({path, wait: true})`）。只有一个版本且用户刚在 FormRelease 里确认过可以跳过。
 
 ```bash
 python scripts/cf/upload.py upload curseforge/release-manifest.json \

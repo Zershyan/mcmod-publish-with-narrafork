@@ -34,7 +34,7 @@ scripts/
 
 ## 表单
 
-四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。
+四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。表单**必须用 GenUI 生成**（缺工具走 SKILL.md 开始前第 4 条的回退链），并且**一律用 `render` 带 `wait: true`**——它会停在表单上直到用户提交；`show` 不支持 `wait`，流程里不用。
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>
@@ -42,7 +42,7 @@ cp assets/forms/FormFull.tsx .narrafork/gen_ui/<名称>/App.tsx
 cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/<名称>/data.ts
 ```
 
-改 `data.ts` 后 GenUI show 该目录。四个模板的用途见 [assets/forms/README.md](assets/forms/README.md)。
+改 `data.ts` 后 `GenUI render({path: 该目录, wait: true})`，它会阻塞到用户点提交。四个模板的用途见 [assets/forms/README.md](assets/forms/README.md)。
 
 ## 运行依赖
 

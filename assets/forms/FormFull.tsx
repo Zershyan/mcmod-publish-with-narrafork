@@ -1,6 +1,6 @@
 /**
  * 发布配置表单模板。
- * 复制本文件与同目录的 data.ts 到 .narrafork/gen_ui/<名称>/ 后 show 该目录。
+ * 复制本文件与同目录的 data.ts 到 .narrafork/gen_ui/<名称>/ 后 render({path, wait: true}) 该目录。
  * 项目差异全部写在 data.ts，本文件不需要改动。
  */
 import { useState } from "react";
@@ -319,7 +319,7 @@ export default function App() {
 	const removeEntry = (index: number) => setEntries((list) => list.filter((_, i) => i !== index));
 
 	const submit = () => {
-		const out: Record<string, any> = { 发布到百科: wiki };
+		const out: Record<string, any> = { wiki };
 		for (const [key, fallback] of Object.entries(D.defaults)) {
 			const current = v[key];
 			const empty =
@@ -343,7 +343,7 @@ export default function App() {
 		out.entries = entries;
 		out.dependencies = deps;
 		(globalThis as any).genUI?.submit(
-			out,
+			{ payload: JSON.stringify(out) },
 			wiki ? "按此配置发布到 CurseForge 与 MC百科" : "按此配置发布到 CurseForge",
 		);
 	};
@@ -622,7 +622,7 @@ export default function App() {
 													<Grid.Col span={4}>
 														<TextInput
 															label="mod 版本"
-															placeholder="1.2.0+1.21.1"
+															placeholder="0.0.1"
 															value={item.modVersion}
 															onChange={(e) =>
 																setVersion(index, { modVersion: e.currentTarget.value })
@@ -1090,7 +1090,7 @@ export default function App() {
 				<Stack gap="sm">
 					<TextInput
 						label="mod 版本"
-						placeholder="1.2.0+1.21.1"
+						placeholder="0.0.1"
 						value={newVersion.modVersion}
 						onChange={(e) => setNewVersion({ ...newVersion, modVersion: e.currentTarget.value })}
 					/>

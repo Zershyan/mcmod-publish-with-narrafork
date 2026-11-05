@@ -1,7 +1,7 @@
 /**
  * 构建前确认：每行一个「分支 + 版本号」，可增删。
  * 只用于装了 zershyan-mcmod-style 的工程；提交后由 agent 跑 ./gradlew build。
- * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 show 该目录。
+ * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 render({path, wait: true}) 该目录。
  */
 import { useState } from "react";
 import {
@@ -58,8 +58,10 @@ export default function App() {
 	const submit = () => {
 		(globalThis as any).genUI?.submit(
 			{
-				rows: filled.map((r) => ({ branch: r.branch.trim(), version: r.version.trim() })),
-				writeBack,
+				payload: JSON.stringify({
+					rows: filled.map((r) => ({ branch: r.branch.trim(), version: r.version.trim() })),
+					writeBack,
+				}),
 			},
 			`按 ${filled.map((r) => `${r.branch}=${r.version}`).join('、')} 构建`,
 		);

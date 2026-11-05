@@ -67,7 +67,7 @@ git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 
 如何确认工程符合这套规范：`build.gradle` 里有 `buildAlpha` 任务、`version` 由 `<mod_version>-<minecraft_version>+build.<N>` 拼成、有 `finalizeArtifacts`。三者对上才适用本节。
 
-包内版本两种都带编号，所以「文件名不带编号」不影响 CF 上的显示名。
+包内元数据两种构建都带编号，但对外显示名和最终 jar 名都不带。
 
 ## 版本号
 
@@ -83,7 +83,7 @@ Gradle 的 `version` 是 `<mod_version>-<minecraft_version>+build.<N>`，例如 
 
 `mod_version` 里**不写 MC 版本**，那由 `minecraft_version` 负责。`0.0.1` 只是新建工程时的初始值，不是固定值。
 
-发布时的 `displayName` 用工程 `version` 原值，不要自己拼 `MC-加载器-名字-版本`，也不要把 `+build.N` 去掉。
+表单里填的 mod 版本是 `mod_version`（`0.0.1`），不是 Gradle `version`。发布时的 `displayName` 拼成 `<modid>-<mod_version>-<mc版本>`（`examplemod-0.0.1-1.21.1`），与正式 jar 文件名一致，不带 `+build.N`。
 
 ## 语言文件
 
@@ -112,6 +112,6 @@ Datagen 输出在 `src/generated/resources/assets/<modid>/lang/`，语言由 `<M
 ## 不要做的
 
 - 不要为了「版本号好看」去改 `mod_version` 或 Gradle `version` 的格式
-- 不要把 `+build.N` 从 `displayName` 里抹掉，那是真实版本
+- 不要把 `+build.N` 写进 `displayName` 或 jar 文件名
 - 不要清理 `build/libs` 里的历史产物，工程默认保留
 - 不要在没有 `api/` 包的工程里假设它有，依赖声明以 `build.gradle` 为准

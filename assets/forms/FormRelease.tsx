@@ -1,6 +1,6 @@
 /**
  * 版本发布表单：已经在 CurseForge 有项目，只发新版本时用。
- * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 show 该目录。
+ * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 render({path, wait: true}) 该目录。
  */
 import { useState } from "react";
 import {
@@ -88,7 +88,7 @@ export default function App() {
 
 	const submit = () => {
 		(globalThis as any).genUI?.submit(
-			{ 项目: D.project, versions },
+			{ payload: JSON.stringify({ project: D.project, versions }) },
 			`发布 ${versions.length} 个版本（${comboCount} 个文件）`,
 		);
 	};
@@ -174,8 +174,8 @@ export default function App() {
 								<Grid gutter="sm">
 									<Grid.Col span={4}>
 										<TextInput
-											label="mod 版本"
-											placeholder="1.2.0+1.21.1"
+										label="mod 版本"
+										placeholder="0.0.1"
 											value={item.modVersion}
 											onChange={(e) => setVersion(index, { modVersion: e.currentTarget.value })}
 										/>

@@ -10,18 +10,18 @@ export const DATA = {
 		license: "AGPL 3.0",
 	},
 
-	/** 已发布版本摘要，只用于展示；从 curseforge/remote-files-*.json 取 */
+	/** 已发布版本摘要，只用于展示；从 curseforge/remote-files-*.json 取，version 是线上 displayName */
 	released: [
-		{ version: "0.0.1-26.1.2+build.1", mc: "26.1.2", loader: "NeoForge", date: "2026-10-20" },
+		{ version: "adcore-0.0.1-26.1.2", mc: "26.1.2", loader: "NeoForge", date: "2026-10-20" },
 	],
 
 	/** 从 Game Versions API 拉到的版本列表；省略时用模板内置候选 */
 	mcVersions: ["26.1.2", "26.1", "1.21.11", "1.21.1", "1.20.1"] as string[],
 
-	/** 待发布的版本；modVersion 填构建脚本里的实际 version */
+	/** 待发布的版本；modVersion 填 gradle.properties 的 mod_version */
 	versions: [
 		{
-			modVersion: "0.0.1-26.1.2+build.2",
+			modVersion: "0.0.2",
 			mcVersions: ["26.1.2"],
 			loaders: ["NeoForge"],
 			javaVersion: "Java 25",

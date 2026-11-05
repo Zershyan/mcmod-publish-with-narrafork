@@ -1,6 +1,6 @@
 # GenUI 表单模板
 
-四个数据驱动的表单，共用同一套用法：复制 `.tsx` 和对应的 `.data.example.ts` 到 `.narrafork/gen_ui/<名称>/`，把后者改名成 `data.ts`，只改数据，`GenUI show` 该目录。
+四个数据驱动的表单，共用同一套用法：复制 `.tsx` 和对应的 `.data.example.ts` 到 `.narrafork/gen_ui/<名称>/`，把后者改名成 `data.ts`，只改数据，然后 `GenUI render({path: 该目录, wait: true})`。
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>
@@ -35,7 +35,7 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/<名称>/data.ts
 | `writeBack` | 默认是否勾选「回填至项目」 |
 | `hints` | 覆盖默认提示文案 |
 
-提交结果：`{ rows: [{branch, version}], writeBack }`。
+提交结果：`JSON.parse(values.payload)` 得到 `{ rows: [{branch, version}], writeBack }`。
 
 勾了回填就把各行写进对应分支的 `gradle.properties`：
 
@@ -55,16 +55,22 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 见文件内注释。核心是 `defaults`（各字段的 placeholder，即调研值）和 `versions` / `authors` / `entries` / `dependencies`。
 
+`versions[].modVersion` 填 `gradle.properties` 里的 `mod_version`（如 `0.0.1`），**不要填 Gradle `version`**，也不带 MC 版本与 `+build.N`。发布时的显示名由 agent 拼成 `<modid>-<mod_version>-<mc版本>`。
+
 ### FormRelease.data.example.ts
 
-见文件内注释。核心是 `project`、`released`（已发布摘要）、`versions`（待发布）。
+见文件内注释。核心是 `project`、`released`（已发布摘要，`version` 填线上 displayName）、`versions`（待发布，`modVersion` 同样填 `mod_version`）。
 
 ### FormConfirm.data.example.ts
 
-见文件内注释。核心是 `project`、`releases`（每个「MC 版本 × 加载器」一条）、`wiki`（不发百科时整段删掉）、`warnings`。
+见文件内注释。核心是 `project`、`releases`（每个「MC 版本 × 加载器」一条，`displayName` 就是该条 `artifact` 文件名去掉 `.jar`）、`wiki`（不发百科时整段删掉）、`warnings`。
 
 ## 公共约定
 
+- **必须用 GenUI 生成**：没有这个工具时不能自己改成文字逐项问，先交互式问用户要不要回退成逐项询问；不同意就再确认一次 GenUI 是否可用，仍不可用则说明卡点并结束会话
+- **表单一律用 `render({path, wait: true})`**：它会停在表单上直到用户点提交，`genUI.submit` 的结果直接回传。`show` 只画界面、不阻塞，流程里不要用；没收到提交结果不要自己继续
+- **提交统一走 `payload`**：模板里写 `genUI.submit({ payload: JSON.stringify(数据) }, 消息)`，agent 侧 `JSON.parse(values.payload)` 还原。直接提交嵌套结构会变形——非 ASCII 的 key 会被静默丢弃，对象和数组里的对象会被转成 JSON 字符串
+- **提交字段名只用 ASCII 字母、数字、下划线**：中文键、带连字符或空格的键会被 `submit` 静默丢掉，不报错；嵌套对象会被序列化成字符串，要嵌套就在拿到后自己 `JSON.parse`
 - 所有调研值放 **placeholder**（灰色提示），用户留空就按提示值执行
 - **枚举类字段要实选**，否则用户看不出会提交什么
 - 同一行的字段保持相同的描述行数，否则控件对不齐

@@ -125,6 +125,10 @@ def main():
             raise SystemExit(f'{label} 有未完成的上传记录，先核对线上文件列表再重试')
 
         artifact = Path(release['artifact'])
+        if '+build.' in artifact.name or '+build.' in display_name:
+            raise SystemExit(
+                f'{label} 带 +build.N：只有正式构建产物能上传，'
+                f'jar 名与 displayName 都不许带编号')
         digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
         if digest != release['sha256']:
             raise SystemExit(f'{label} 的产物已变化，停止上传')

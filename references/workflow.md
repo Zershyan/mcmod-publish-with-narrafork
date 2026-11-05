@@ -13,12 +13,14 @@ git branch -a && git remote -v
 ls src/main/resources/logo.png
 ```
 
-**要拿到**：modid、英文名、版本号、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 命名规则、语言文件位置。
+**要拿到**：modid、英文名、`mod_version`、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 命名规则、语言文件位置。
 
-**多分支工程逐个分支读**。`version` 的计算方式可能完全不同：
+**多分支工程逐个分支读**。要拿的是 `mod_version` 与 `minecraft_version`，不是 Gradle `version`：
 
-- `${mod_version}-${minecraft_version}+build.${n}` → `2.0.0-1.21.1+build.44`
-- 直接 `version = mod_version` → `1.20.1-1.0.1`
+- `${mod_version}-${minecraft_version}+build.${n}` → `mod_version=2.0.0`、`minecraft_version=1.21.1`
+- 直接 `version = mod_version` → `mod_version=1.0.1`
+
+Gradle `version` 只用于包内元数据与默认 jar 名；发布显示名和最终 jar 名都不带 `+build.N`。
 
 **产物**：一张事实表，汇报给用户，缺的标出来。
 
@@ -57,6 +59,8 @@ python scripts/cf/upload.py query curseforge
 
 ## 4. 出配置表单
 
+**表单必须用 GenUI 生成**，不用文字逐项问。当前没有这个工具时：先交互式提问问用户要不要回退成逐项询问——同意就逐项问；不同意就再确认一次 GenUI 是否可用，仍不可用就说明卡点并结束会话，不要自己降级。
+
 按场景选模板：
 
 | 场景 | 模板 |
@@ -72,7 +76,9 @@ cp assets/forms/FormFull.tsx .narrafork/gen_ui/publish/App.tsx
 cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 ```
 
-改 `data.ts`，GenUI show 该目录。**只改 data.ts，不动 App.tsx**。
+改 `data.ts`，然后 `GenUI render({path: 该目录, wait: true})`。拿到的是 `{"payload": "<JSON 字符串>"}`，`JSON.parse` 还原后再用。**只改 data.ts，不动 App.tsx**。
+
+用 `render` 带 `wait`，**不用 `show`**：`show` 只画界面、不阻塞，画完还能接着跑；`render({path, wait:true})` 会停在表单上直到用户点提交。没收到提交结果就当没确认——不构建、不上传、不提交百科。只读清单这类没有联动的，直接 `render({wait:true, source})` 内联写即可。
 
 **产物**：
 
@@ -80,6 +86,8 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 curseforge/release-manifest.json   每个「MC 版本 × 加载器」一条
 docs/mcmod/mod-config.json         百科提交配置
 ```
+
+`displayName` 与 jar 名同源：`<modid>-<mod_version>-<mc版本>`，`artifact` 就是 `build/libs/<同名>.jar`。表单里填的只是 `mod_version`，整串由 agent 拼。
 
 ## 5. CurseForge
 

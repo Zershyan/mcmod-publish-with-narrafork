@@ -47,10 +47,10 @@ export const DATA = {
 		wLinks: "https://github.com/Zershyan/SnowyCrescentCore",
 	},
 
-	/** 版本条目：modVersion 填构建脚本里的实际 version，不要按统一规则拼 */
+	/** 版本条目：modVersion 填 gradle.properties 的 mod_version，只写模组版本，不带 MC 版本和 build 编号 */
 	versions: [
 		{
-			modVersion: "1.20.1-1.0.1",
+			modVersion: "1.0.1",
 			mcVersions: ["1.20.1"],
 			loaders: ["Forge"],
 			javaVersion: "Java 17",
@@ -59,7 +59,7 @@ export const DATA = {
 			changelog: "",
 		},
 		{
-			modVersion: "2.0.0-1.21.1+build.34",
+			modVersion: "2.0.0",
 			mcVersions: ["1.21.1"],
 			loaders: ["NeoForge"],
 			javaVersion: "Java 21",

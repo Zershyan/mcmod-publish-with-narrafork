@@ -1,6 +1,6 @@
 /**
  * 提交前确认：把即将上传/提交的数据全部摆出来，允许改关键项，确认后执行。
- * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 show 该目录。
+ * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 render({path, wait: true}) 该目录。
  */
 import { useState } from "react";
 import {
@@ -60,7 +60,7 @@ export default function App() {
 
 	const submit = () => {
 		(globalThis as any).genUI?.submit(
-			{ project: D.project, releases, wiki: wiki ?? null },
+			{ payload: JSON.stringify({ project: D.project, releases, wiki: wiki ?? null }) },
 			`确认发布 ${releases.length} 个文件${wiki ? " 并提交百科" : ""}`,
 		);
 	};

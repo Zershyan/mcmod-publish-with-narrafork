@@ -91,7 +91,7 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_c
     "metadata": {
       "changelog": "英文块\n\n---\n\n中文块",
       "changelogType": "markdown",
-      "displayName": "2.0.0-1.21.1+build.44",
+      "displayName": "examplemod-2.0.0-1.21.1",
       "releaseType": "release",
       "gameVersions": ["1.21.1", "NeoForge", "Java 21", "Client", "Server"],
       "relations": { "projects": [{ "projectId": 309927, "type": "requiredDependency" }] }
@@ -108,8 +108,9 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 python scripts/cf/upload.py list curseforge --project-id <ID>
 ```
 
-- `displayName` 用工程 `version` 原值，**不要拼** `MC-加载器-名字-版本`
-- `displayName` 里带 `+build.N` 是正常的（那是版本号）；**禁止上传的是文件名带 `+build.N` 的 jar**，两者不是一回事
+- `displayName` 拼成 `<modid>-<mod_version>-<mc版本>`，即正式 jar 文件名去掉 `.jar`，例 `examplemod-2.0.0-1.21.1`
+- **不要带 `+build.N`**：带编号的是 `buildAlpha` 产物，既不能上传，也不要写进显示名
+- 脚本会直接拒绝 jar 名或 `displayName` 带 `+build.` 的条目
 - `artifact` 上传前校验 sha256
 - 一个 JAR 只对应一组「MC 版本 + 加载器」，多个组合要拆成多条
 - `relations.projects[].type` 常用 `requiredDependency`、`optionalDependency`、`incompatible`

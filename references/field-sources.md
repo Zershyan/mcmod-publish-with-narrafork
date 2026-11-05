@@ -9,7 +9,8 @@
 | modid | `gradle.properties` → `mod_id` |
 | 英文名 | `gradle.properties` → `mod_name` |
 | 中文名 | **问用户**（语言文件里通常没有） |
-| 版本号 | `build.gradle` 里 `version` 的实际值（含 MC 版本与构建尾缀） |
+| mod 版本 | `gradle.properties` → `mod_version`（只含模组版本，不带 MC 版本与 build 编号） |
+| 显示名 | 拼成 `<modid>-<mod_version>-<mc版本>`，与正式 jar 文件名一致 |
 | MC 版本 | `gradle.properties` → `minecraft_version` |
 | 加载器 | 有 `neo_version` → NeoForge；有 `forge_version` → Forge |
 | Java 版本 | `build.gradle` → `java.toolchain.languageVersion` |
@@ -18,9 +19,9 @@
 | 简介 | `gradle.properties` → `mod_description` |
 | JAR 名 | `base { archivesName }`，没配时用工程目录名 |
 
-装了 `zershyan-mcmod-style` 的工程，**禁止使用文件名带 `+build.N` 的 jar**，细节见 [与 zershyan-mcmod-style 同装时](with-mcmod-style.md)。没装的按 `build.gradle` 实际命名判断。
+装了 `zershyan-mcmod-style` 的工程，**禁止使用文件名带 `+build.N` 的 jar**，细节见 [与 zershyan-mcmod-style 同装时](with-mcmod-style.md)。没装的按 `build.gradle` 实际命名判断。上传脚本对所有工程都拒绝带 `+build.` 的 jar 名与显示名。
 
-**版本号不要拼**。有的工程是 `${mod_version}-${minecraft_version}+build.${n}`，有的直接 `version = mod_version`，多分支工程甚至每个分支都不一样。逐个分支读 `build.gradle`。
+**Gradle `version` 不直接当发布版本号**。装 style skill 时它是 `${mod_version}-${minecraft_version}+build.${n}`，只用于包内元数据与默认 jar 名。表单里填 `mod_version`，显示名按上表拼。多分支工程逐个分支读 `gradle.properties`。
 
 ## CurseForge 项目
 
@@ -43,7 +44,7 @@
 | 字段 | 取自 |
 |---|---|
 | JAR 路径 | 装 style skill：`build/libs/<archivesName>-<mod_version>-<mc>.jar`（不带构建编号）；通用：`build/libs/<archivesName>-<version>.jar` |
-| 显示名 | 工程 `version` 原值 |
+| 显示名 | `<modid>-<mod_version>-<mc版本>`，与正式 jar 文件名一致 |
 | 更新说明 | `git log` 整理，英文块 + `---` + 中文块 |
 | 发布类型 | 默认 `release`，不确定时问 |
 | 游戏版本标签 | 第 3 步拉的 Game Versions |

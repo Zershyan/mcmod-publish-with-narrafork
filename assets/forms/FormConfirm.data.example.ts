@@ -10,15 +10,15 @@ export const DATA = {
 		slug: "project-slug",
 	},
 
-	/** 一个「MC 版本 × 加载器」一条 */
+	/** 一个「MC 版本 × 加载器」一条；displayName 就是 artifact 文件名去掉 .jar */
 	releases: [
 		{
 			minecraft: "1.21.1",
 			loader: "NeoForge",
 			javaVersion: "Java 21",
-			displayName: "1.2.0-1.21.1+build.5",
+			displayName: "examplemod-1.2.0-1.21.1",
 			releaseType: "release",
-			artifact: "build/libs/examplemod-1.2.0-1.21.1+build.5.jar",
+			artifact: "build/libs/examplemod-1.2.0-1.21.1.jar",
 			sha256: "",
 			changelog: "英文说明\n\n---\n\n中文说明",
 		},
