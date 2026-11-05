@@ -29,7 +29,17 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 
 ## 版本号
 
-`mod_version` 只写模组版本（如 `0.0.1`），MC 版本单独由 `minecraft_version` 维护。Gradle 的 `version` 是 `<mod_version>-<minecraft_version>+build.<N>`。
+三个来源拼成完整版本，各自职责不同：
+
+| 来源 | 内容 |
+|---|---|
+| `mod_version` | 模组自身版本，新工程从 `0.0.1` 起步，之后由人按发布计划改 |
+| `minecraft_version` | 目标 MC 版本，单独维护 |
+| `mod_build_number` | 构建编号，由 `buildAlpha` 递增并回写 |
+
+Gradle 的 `version` 是 `<mod_version>-<minecraft_version>+build.<N>`，例如 `0.0.1-1.21.1+build.5`。
+
+`mod_version` 里**不写 MC 版本**，那由 `minecraft_version` 负责。`0.0.1` 只是新建工程时的初始值，不是固定值。
 
 发布时的 `displayName` 用工程 `version` 原值，不要自己拼 `MC-加载器-名字-版本`，也不要把 `+build.N` 去掉。
 
