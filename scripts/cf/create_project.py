@@ -34,6 +34,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('config')
     parser.add_argument('output', nargs='?')
+    parser.add_argument('--no-icon', action='store_true',
+                        help='不把图标塞进脚本，体积小很多，图标另行上传')
+    parser.add_argument('--step', action='store_true',
+                        help='单步模式：每次只推进一个页面，适合会被超时打断的自动化工具')
     args = parser.parse_args()
 
     config_path = Path(args.config).resolve()
@@ -42,7 +46,9 @@ def main():
     resolve = lambda p: Path(p) if Path(p).is_absolute() else base / p
 
     description = resolve(config['description']).read_text(encoding='utf-8')
-    icon = load_icon(resolve(config['icon'])) if config.get('icon') else ''
+    icon = ''
+    if config.get('icon') and not args.no_icon:
+        icon = load_icon(resolve(config['icon']))
 
     data = {
         'name': config['name'],
@@ -55,6 +61,7 @@ def main():
         'iconBase64': icon,
         # 默认自动点创建按钮；启用前必须先用交互式提问向用户确认
         'autoCreate': bool(config.get('autoCreate', True)),
+        'singleStep': bool(config.get('singleStep', False)) or args.step,
     }
     if not 1 <= len(data['summary']) <= 256:
         raise SystemExit(f'简介长度 {len(data["summary"])}，CurseForge 限制 256 字符')

@@ -227,6 +227,15 @@
   };
   const stepOf = () => (location.hash.match(/create\/([a-z-]+)/i) || [])[1] || 'unknown';
   const buttonByText = (re) => [...document.querySelectorAll('button')].filter(visible).find((b) => re.test(norm(b.innerText || b.textContent)) && !b.disabled);
+  // 按钮会随 React 重渲染短暂消失或处于 disabled，轮询等待而不是只查一次
+  const waitButton = async (re, tries = 20) => {
+    for (let i = 0; i < tries; i++) {
+      const btn = buttonByText(re);
+      if (btn) return btn;
+      await sleep(300);
+    }
+    return null;
+  };
 
   // 头像裁剪框：等待对话框出现后点确认按钮（图标已是正方形，默认裁剪即整张图）
   const confirmCrop = async () => {
@@ -249,6 +258,23 @@
   for (let round = 0; round < 5; round++) {
     report.length = 0;
     const step = stepOf();
+
+    // 0. 选游戏步骤：不先选 Minecraft，后面每一页都找不到字段
+    if (step === 'choose-game') {
+      const card = [...document.querySelectorAll('img[alt="Minecraft"], [alt="Minecraft"]')]
+        .map((el) => el.closest('button, [role="button"], a, div'))
+        .filter(visible)
+        .sort((a, b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height)[0];
+      if (card) {
+        card.click();
+        await sleep(1500);
+        console.log('已选择 Minecraft');
+        continue;
+      }
+      console.log('%c当前在 Choose Game 步骤，没找到 Minecraft 卡片，请手动选择后重新运行', 'color:#c92a2a;font-weight:bold');
+      break;
+    }
+
     const want = (field) => !STEP_FIELDS[step] || STEP_FIELDS[step].includes(field);
     let nameField = null;
     let alreadyFilled = false;
@@ -291,7 +317,8 @@
     }
 
     // 5. 项目图标：写入文件输入框后自动确认裁剪框（名称已是本项目时视为已上传过）
-    if (want('icon')) {
+    if (want('icon') && !DATA.iconBase64) mark('项目图标', false, '脚本未带图标，请手动上传 curseforge/icon.png');
+    if (want('icon') && DATA.iconBase64) {
       const fileInput = [...document.querySelectorAll('input[type="file"]')].find((f) => !f.accept || /image|png/i.test(f.accept));
       if (fileInput && alreadyFilled) {
         mark('项目图标', true, '已上传过，跳过');
@@ -325,6 +352,24 @@
         const toggle = [...document.querySelectorAll('button, label, [role="tab"], [role="radio"], input[type="radio"]')].filter(visible)
           .find((el) => /^\s*markdown\s*$/i.test(el.textContent || el.value || ''));
         if (toggle) { toggle.click(); markdownMode = true; await sleep(500); }
+      }
+      // 现网用 MUI 下拉做格式切换：combobox 显示 WYSIWYG，展开后有 Markdown 选项
+      if (!markdownMode) {
+        const combo = [...document.querySelectorAll('[role="combobox"]')].filter(visible)
+          .find((el) => /wysiwyg|markdown|html/i.test(el.textContent || ''));
+        if (combo && !/^\s*markdown\s*$/i.test(combo.textContent || '')) {
+          fireClick(combo);
+          await sleep(600);
+          const option = [...document.querySelectorAll('[role="option"]')].filter(visible)
+            .find((el) => /^\s*markdown\s*$/i.test(el.textContent || ''));
+          if (option) {
+            fireClick(option);
+            markdownMode = true;
+            await sleep(800);
+          } else {
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          }
+        }
       }
       const descField = findField(['description'], ['summary', 'search'], 'textarea');
       const plainTextareas = [...document.querySelectorAll('textarea')].filter(visible).filter((t) => t !== summaryField);
@@ -379,16 +424,18 @@
       console.log(`%c${blocked || '有字段未填上，已停在当前步骤；处理后可再次运行脚本'}`, 'color:#c92a2a;font-weight:bold');
       break;
     }
-    // 9. 点 Next；没有 Next 说明到了最后一步
-    const next = buttonByText(/^next$/);
+    // 9. 点 Next；按钮会随重渲染短暂消失或被禁用，先轮询等待
+    const next = await waitButton(/^next$/);
     if (!next) {
       if (!DATA.autoCreate) {
         console.log('%c已到最后一步：请核对全部内容，确认无误后手动点击创建按钮。', 'color:#2b8a3e;font-weight:bold');
         break;
       }
-      const create = buttonByText(/^(create|submit|create project|finish|done)$/);
+      const create = await waitButton(/^(create|submit|create project|finish|done)$/, 10);
       if (!create) {
-        console.log('%c到了最后一步但没找到创建按钮，请手动处理。', 'color:#c92a2a;font-weight:bold');
+        const present = [...document.querySelectorAll('button')].filter(visible).map((b) => (b.innerText || '').trim()).filter(Boolean);
+        const hasNext = present.some((t) => /^next$/i.test(t));
+        console.log(`%c没找到可用的创建按钮（${hasNext ? '页面上仍有 Next，但处于禁用或未就绪状态' : '当前页面既无 Next 也无创建按钮'}）。可见按钮：${present.join(' / ')}`, 'color:#c92a2a;font-weight:bold');
         break;
       }
       console.log('%c正在自动创建项目…', 'color:#c92a2a;font-weight:bold');
@@ -415,5 +462,11 @@
       break;
     }
     await sleep(1200);
+    // 单步模式：一次只推进一页，避免自动化工具把长任务误判成超时
+    if (DATA.singleStep) {
+      console.log('%c单步模式：当前页已完成，再次执行脚本继续', 'color:#1971c2;font-weight:bold');
+      console.log({ step: stepOf(), hash: location.hash, report });
+      return;
+    }
   }
 })();

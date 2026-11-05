@@ -4,11 +4,19 @@
 
 ## 登录与凭据
 
-三层回退，从上往下试。
+三层回退，从上往下试，**前面的能用就不要往下走**。
 
-### 第一层：CDP 导出 cookie（首选）
+### 第一层：browsermcp（首选）
 
-用 `Browser` 工具 launch 一个 headed 会话，让用户在里面登录（QQ 扫码或账号密码），然后从浏览器进程读完整 cookie：
+MCP 连的是用户已登录的 Chrome，直接在页面里执行提交脚本即可——浏览器自带登录态和验证码，**完全不需要导出 cookie**。
+
+1. `goto https://www.mcmod.cn/` 看页头有没有用户名；没登录就让用户在这个浏览器里登录
+2. `python scripts/mcmod/console.py docs/mcmod/mod-config.json` 生成脚本
+3. `eval <脚本内容>` 执行，`console` 看返回
+
+### 第二层：Browser 工具 + CDP 导出 cookie
+
+有 `Browser` 工具时 launch 一个 headed 会话，让用户在里面登录（QQ 扫码或账号密码），然后从浏览器进程读完整 cookie：
 
 ```bash
 python scripts/mcmod/cookies.py dump --profile <profile目录> --out .narrafork/mcmod-cookie.txt
@@ -16,23 +24,21 @@ python scripts/mcmod/cookies.py dump --profile <profile目录> --out .narrafork/
 
 profile 目录里有 `DevToolsActivePort`，第一行是调试端口。NarraFork 启动的会话 profile 形如 `%TEMP%\puppeteer_dev_chrome_profile-*`。
 
+拿到 cookie 后走 `submit.py` 本地提交，验证码由 agent 取图问用户。
+
 **为什么不能用 `document.cookie`**：登录凭证 `dSit_2132_auth` 是 httpOnly，页面里读不到。实测 `document.cookie` 只有 5 个，CDP 能拿到 11 个。
 
-### 第二层：手动粘贴
+### 兜底：控制台脚本，用户自己 F12 粘贴
 
-没有 `Browser` 工具时，让用户从浏览器 F12 的 Network 里复制某次请求的 `Cookie` 头，通过交互式提问交过来，写进 `.narrafork/mcmod-cookie.txt`。
-
-注意 `document.cookie` 拿不到 httpOnly 的登录凭证，别让用户用那种方式取。
-
-### 兜底：控制台脚本
-
-既没有 `Browser` 工具、又不想让用户在本地留 cookie 时，用这个。脚本在页面里运行，浏览器自带登录态和验证码，**完全不需要导出 cookie**。
+MCP 和 Browser 都没有时：
 
 ```bash
 python scripts/mcmod/console.py docs/mcmod/mod-config.json
 ```
 
 生成一段 JS，用户在对应页面（模组条目 `/class/add/`，资料条目 `/item/add/<模组ID>/`）**先填好验证码**，再 F12 粘贴运行。脚本自己填表、组装 `getEditorData` 并 POST 到 `doEdit`。
+
+也可以让用户从 F12 的 Network 里复制某次请求的 `Cookie` 头交过来，写进 `.narrafork/mcmod-cookie.txt`，之后走 `submit.py`。别让用户用 `document.cookie` 取，那拿不到 httpOnly 凭证。
 
 | 优点 | 限制 |
 |---|---|

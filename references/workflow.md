@@ -7,20 +7,24 @@
 **动作**
 
 ```bash
-cat gradle.properties
-grep -nE "^version|archivesName|toolchain|JavaLanguageVersion|id 'net\." build.gradle
-git branch -a && git remote -v
-ls src/main/resources/logo.png
+python scripts/preflight.py
 ```
 
-**要拿到**：modid、英文名、`mod_version`、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 命名规则、语言文件位置。
+一条命令给出全部事实：modid、英文名、`mod_version`、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 前缀、语言文件、分支、构建规范判定、可上传的 jar、凭据状态，末尾还有「下一步」。
+
+需要原始细节时再手查：
+
+```bash
+cat gradle.properties
+grep -nE "^version|archivesName|toolchain|JavaLanguageVersion|id 'net\." build.gradle
+```
 
 **多分支工程逐个分支读**。要拿的是 `mod_version` 与 `minecraft_version`，不是 Gradle `version`：
 
 - `${mod_version}-${minecraft_version}+build.${n}` → `mod_version=2.0.0`、`minecraft_version=1.21.1`
 - 直接 `version = mod_version` → `mod_version=1.0.1`
 
-Gradle `version` 只用于包内元数据与默认 jar 名；发布显示名和最终 jar 名都不带 `+build.N`。
+Gradle `version` 只用于包内元数据与默认 jar 名；符合 style 规范的工程里，正式 jar 名和显示名都不带 `+build.N`，其他工程按 `build.gradle` 的实际命名。
 
 **产物**：一张事实表，汇报给用户，缺的标出来。
 
@@ -83,11 +87,17 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 **产物**：
 
 ```
-curseforge/release-manifest.json   每个「MC 版本 × 加载器」一条
+curseforge/release-manifest.json   每个「MC 版本 × 加载器」一条，用 make_manifest.py 生成
 docs/mcmod/mod-config.json         百科提交配置
 ```
 
-`displayName` 与 jar 名同源：`<modid>-<mod_version>-<mc版本>`，`artifact` 就是 `build/libs/<同名>.jar`。表单里填的只是 `mod_version`，整串由 agent 拼。
+清单不要手写：
+
+```bash
+python scripts/cf/make_manifest.py payload.json --out curseforge/release-manifest.json
+```
+
+`displayName` 取上传 jar 的文件名去掉 `.jar`——符合 style 规范的工程里它就是 `<modid>-<mod_version>-<mc版本>`，其他工程按 `build.gradle` 的实际命名。表单里填的只是 `mod_version`，整串由脚本生成。
 
 ## 5. CurseForge
 
@@ -96,10 +106,15 @@ docs/mcmod/mod-config.json         百科提交配置
 ```bash
 python scripts/cf/create_project.py curseforge/cf_create_project.json
 node --check curseforge/cf_create_project_fill.js
+```
+
+**优先用 browsermcp 跑**（复用用户已登录的 Chrome）：`goto` 到 Create A Project，`eval` 整段脚本，`console` 看结果。没有 MCP 时回落到人工粘贴：
+
+```bash
 powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_create_project_fill.js' | Set-Clipboard"
 ```
 
-用户在 Create A Project 页面 F12 粘贴运行。**界面必须切英文、关闭浏览器翻译**。
+两种方式都要求**界面切英文、关闭浏览器翻译**。脚本体积主要来自图标 base64，MCP `eval` 传不动时加 `--no-icon` 出瘦脚本，图标另行上传。
 
 `autoCreate` 默认 true，脚本会自己点创建并读回 `projectId`/`slug`。启用前必须单独确认一次。
 
@@ -124,19 +139,21 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 ## 6. MC百科（用户勾选才做）
 
-### 6.1 拿 cookie
+### 6.1 选提交通道
 
 ```bash
 ls .narrafork/mcmod-cookie.txt
 ```
 
-按顺序回退：
+有 cookie 就跳过回退表，直接走 `submit.py`。没有就从上往下试，**前面的能用就不要往下走**：
 
-| 条件 | 做法 |
-|---|---|
-| 有 `Browser` 工具 | launch 可见会话 → 用户登录 → `cookies.py dump` |
-| 没有 `Browser`、或不想留 cookie | `console.py` 生成控制台脚本，用户在页面填好验证码后 F12 运行 |
-| 都不行 | 让用户从 F12 的 Network 复制 `Cookie` 请求头，交互式提问收过来 |
+| 顺序 | 条件 | 做法 |
+|---|---|---|
+| 1 | 有 browsermcp | 打开百科确认已登录 → `console.py` 生成脚本 → `eval` 执行，不需要 cookie |
+| 2 | 有 `Browser` 工具 | launch 可见会话 → 用户登录 → `cookies.py dump` → 走 `submit.py` |
+| 3 | 都没有 | `console.py` 生成控制台脚本，用户填好验证码后 F12 运行 |
+
+第 3 层也可以让用户从 F12 的 Network 复制 `Cookie` 请求头，交互式提问收过来，写进文件后走 `submit.py`。
 
 **验证码**：百科登录页有图形验证码，账号密码纯脚本走不通；QQ 登录必须人工扫码。两种都要用户参与。
 

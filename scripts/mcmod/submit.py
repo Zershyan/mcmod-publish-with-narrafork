@@ -22,9 +22,12 @@ from author import find as find_author
 API = 'https://event.mcmod.cn/action/edit/doEdit/'
 ADD_PAGE = 'https://www.mcmod.cn/class/add/'
 CAPTCHA_URL = 'https://www.mcmod.cn/frame/edit/EditCaptcha/?id={captcha_id}'
-COOKIE_FILE = ROOT / '.narrafork' / 'mcmod-cookie.txt'
-VERSION_CACHE = ROOT / '.narrafork' / 'mcmod-mcversions.json'
-CAPTCHA_FILE = ROOT / '.narrafork' / 'mcmod-captcha.png'
+# 产物统一落在当前工程目录下；skill 目录里的旧文件只用于读
+WORK_DIR = Path.cwd() / '.narrafork'
+COOKIE_FILE = WORK_DIR / 'mcmod-cookie.txt'
+VERSION_CACHE = WORK_DIR / 'mcmod-mcversions.json'
+CAPTCHA_FILE = WORK_DIR / 'mcmod-captcha.png'
+CAPTCHA_BIG = WORK_DIR / 'mcmod-captcha-4x.png'
 ENUMS = json.loads((ROOT / 'assets' / 'mcmod-enums.json').read_text(encoding='utf-8'))
 # 添加页内嵌全部 MC 版本：var arrMCVer = $.parseJSON('[{"id":"78","name":"26.1.2"},…]')
 MC_VERSION_PATTERN = re.compile(r"arrMCVer\s*=\s*\$\.parseJSON\('(\[.*?\])'\)", re.S)
@@ -32,11 +35,23 @@ MC_VERSION_PATTERN = re.compile(r"arrMCVer\s*=\s*\$\.parseJSON\('(\[.*?\])'\)", 
 ITEM_FIELDS = ('name', 'ename', 'remark', 'regname', 'damage', 'maxstack', 'oredict', 'metadata', 'content')
 
 
+def cookie_path() -> Path:
+    """工程目录优先；老版本把 cookie 存在 skill 目录，仍兼容读数。"""
+    if COOKIE_FILE.exists():
+        return COOKIE_FILE
+    legacy = ROOT / '.narrafork' / 'mcmod-cookie.txt'
+    if legacy.exists():
+        print(f'用 skill 目录里的旧 cookie：{legacy}')
+        return legacy
+    return COOKIE_FILE
+
+
 def make_session():
-    if not COOKIE_FILE.exists():
+    path = cookie_path()
+    if not path.exists():
         raise SystemExit(f'缺少 cookie 文件：{COOKIE_FILE}，先跑 cookies.py dump')
     session = requests.Session(impersonate='chrome')
-    session.headers['Cookie'] = COOKIE_FILE.read_text(encoding='utf-8').strip()
+    session.headers['Cookie'] = path.read_text(encoding='utf-8').strip()
     return session
 
 
@@ -69,6 +84,13 @@ def grab_captcha(session, captcha_id: str = 'class_add_0') -> Path:
     CAPTCHA_FILE.parent.mkdir(parents=True, exist_ok=True)
     CAPTCHA_FILE.write_bytes(response.content)
     print(f'验证码已保存：{CAPTCHA_FILE}（{len(response.content)} 字节）')
+    try:
+        from PIL import Image
+        with Image.open(CAPTCHA_FILE) as image:
+            image.resize((image.width * 4, image.height * 4), Image.LANCZOS).save(CAPTCHA_BIG)
+        print(f'放大 4 倍：{CAPTCHA_BIG}')
+    except ImportError:
+        print('装了 Pillow 可以另外输出 4 倍放大图')
     return CAPTCHA_FILE
 
 

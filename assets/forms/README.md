@@ -55,7 +55,7 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 见文件内注释。核心是 `defaults`（各字段的 placeholder，即调研值）和 `versions` / `authors` / `entries` / `dependencies`。
 
-`versions[].modVersion` 填 `gradle.properties` 里的 `mod_version`（如 `0.0.1`），**不要填 Gradle `version`**，也不带 MC 版本与 `+build.N`。发布时的显示名由 agent 拼成 `<modid>-<mod_version>-<mc版本>`。
+`versions[].modVersion` 填 `gradle.properties` 里的 `mod_version`（如 `0.0.1`），**不要填 Gradle `version`**，也不带 MC 版本与 `+build.N`。发布时的显示名由 `make_manifest.py` 按 jar 文件名生成。
 
 ### FormRelease.data.example.ts
 

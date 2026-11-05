@@ -4,15 +4,21 @@
 
 ## 入口
 
+先跑一条命令，后面照输出走：
+
+```bash
+python scripts/preflight.py
+```
+
 | 文档 | 内容 |
 |---|---|
-| [SKILL.md](SKILL.md) | 走哪条路、七步流程、硬约束 |
+| [SKILL.md](SKILL.md) | 七步流程，每步都是「跑 → 看 → 过」 |
 | [完整流程](references/workflow.md) | 七个步骤的判定条件与产物 |
-| [CurseForge](references/curseforge.md) | 令牌、上传、依赖、状态语义 |
+| [CurseForge](references/curseforge.md) | 令牌、建项目、上传、依赖、状态语义 |
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、审核 |
 | [字段来源](references/field-sources.md) | 每个字段从哪取 |
 | [踩坑记录](references/pitfalls.md) | 症状、原因、正确做法 |
-| [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md) | 两套 skill 同时安装时的产物、版本与资源约定 |
+| [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md) | 工程符合 style 规范时的产物、版本与资源约定 |
 
 ## 目录
 
@@ -24,17 +30,18 @@ assets/
   mcmod-enums.json   百科提交的枚举对照
   content-templates.md  百科正文模板
 scripts/
-  cf/                CurseForge：请求封装、上传、建项目脚本生成
+  preflight.py       开局体检：工程事实、构建规范、凭据、下一步
+  cf/                CurseForge：请求封装、上传、清单生成、建项目脚本生成
   mcmod/             百科：cookie、作者查询、条目提交
   mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
   project/           工程侧：把版本号写进各分支的 gradle.properties
 ```
 
-百科有两条提交路径：拿到 cookie 就用 `submit.py` 本地提交；拿不到就用 `console.py` 生成控制台脚本，在页面里跑，浏览器自带登录态和验证码。
+百科按当前环境选通道，从上往下试：**有 browsermcp** 直接在页面里跑 `console.py` 生成的控制台脚本（浏览器自带登录态，不需要 cookie）；**有 `Browser` 工具**就登录后 dump cookie，走 `submit.py` 本地提交；**都没有**就把脚本给用户，自己 F12 粘贴。
 
 ## 表单
 
-四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。表单**必须用 GenUI 生成**（缺工具走 SKILL.md 开始前第 4 条的回退链），并且**一律用 `render` 带 `wait: true`**——它会停在表单上直到用户提交；`show` 不支持 `wait`，流程里不用。
+四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。表单**必须用 GenUI 生成**（缺工具的回退链见 SKILL.md 开局段），并且**一律用 `render` 带 `wait: true`**——它会停在表单上直到用户提交；`show` 不支持 `wait`，流程里不用。
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>

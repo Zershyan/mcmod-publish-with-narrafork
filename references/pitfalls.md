@@ -52,7 +52,15 @@
 
 **原因**：按「MC-加载器-名字-版本」自己拼了；或者把 Gradle `version` 原值直接当发布版本号——那里面含 build 编号。
 
-**做法**：`displayName` 拼成 `<modid>-<mod_version>-<mc版本>`，与正式 jar 文件名一致（`examplemod-0.0.1-1.21.1`）。`mod_version` 从 `gradle.properties` 读，不带 MC 版本、不带 `+build.N`。
+**做法**：`displayName` 取上传 jar 的文件名去掉 `.jar`。装了 style skill 时它就是 `<modid>-<mod_version>-<mc版本>`；`mod_version` 从 `gradle.properties` 读，不带 MC 版本和 `+build.N`。用 `make_manifest.py` 生成就不会错。
+
+### gameVersions 传名称被拒
+
+**症状**：上传报 400 `Expected Integer but got String. Path 'gameVersions[0]'`。
+
+**原因**：接口要整数 ID；名称在 `game-versions.json` 里还可能有同名多条、分属不同版本组（`1.20.1` 就有三条）。
+
+**做法**：manifest 里继续写名称，`upload.py` 发请求前自动换成 ID。不要手写 ID，也别删 `game-versions.json`——缺了它转换不了。
 
 ### JAR 路径猜错
 
@@ -68,7 +76,7 @@
 
 **原因**：`build/libs` 里同时躺着普通 `build` 和 `buildAlpha` 的产物，选错了。`zershyan-mcmod-style` 规范里，带 `+build.<N>` 的是 alpha 测试构建。
 
-**做法**：**禁止上传任何文件名带 `+build.N` 的 jar**，没有例外。挑了也不许，只剩这种包的分支直接停下报告，等正式构建完成再来。候选里都没编号时按版本号取最新。
+**做法**：装了 style skill 且构建脚本符合其规范时，**禁止上传任何文件名带 `+build.N` 的 jar**，没有例外。挑了也不许，只剩这种包的分支直接停下报告，等正式构建完成再来。候选里都没编号时按版本号取最新。
 
 ### 依赖漏声明
 

@@ -47,6 +47,55 @@ def remote_display_names(session, project_id: str) -> dict[str, str]:
         return {}
 
 
+def load_version_index(path: Path) -> tuple[dict, dict]:
+    """把 game-versions.json 索引成「名称 → 候选」与「类型 → 成员」。"""
+    if not path.exists():
+        raise SystemExit(f'缺少 {path}，先跑 upload.py query')
+    by_name, groups = {}, {}
+    for item in json.loads(path.read_text(encoding='utf-8')):
+        by_name.setdefault(item['name'], []).append(item)
+        groups.setdefault(item['gameVersionTypeID'], []).append(item)
+    return by_name, groups
+
+
+def resolve_version_ids(names: list, by_name: dict, groups: dict) -> list:
+    """名称转成 API 要的整数 ID。同名多条时，选成员都在同一版本线上的那组。"""
+    ids = []
+    for name in names:
+        if isinstance(name, int):
+            ids.append(name)
+            continue
+        candidates = by_name.get(name, [])
+        if not candidates:
+            raise SystemExit(f'gameVersions 里的「{name}」在 game-versions.json 里找不到')
+        if len(candidates) > 1:
+            major = '.'.join(name.split('.')[:2])
+            candidates = [c for c in candidates
+                          if all(v['name'].startswith(major) for v in groups[c['gameVersionTypeID']])]
+            if len(candidates) != 1:
+                listed = '、'.join(f'{c["id"]}(type {c["gameVersionTypeID"]})'
+                                   for c in by_name[name])
+                raise SystemExit(f'gameVersions 里的「{name}」无法唯一确定，候选：{listed}')
+        ids.append(candidates[0]['id'])
+    return ids
+
+
+def find_project_root(start: Path) -> Path:
+    for parent in (start, *start.parents):
+        if (parent / 'build.gradle').exists():
+            return parent
+    return start
+
+
+def strict_build_number(root: Path) -> bool:
+    """只有符合 zershyan-mcmod-style 的工程才禁止带 +build.N 的产物。"""
+    build = root / 'build.gradle'
+    if not build.exists():
+        return False
+    text = build.read_text(encoding='utf-8', errors='replace')
+    return 'buildAlpha' in text and 'finalizeArtifacts' in text
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['query', 'list', 'upload'])
@@ -103,13 +152,21 @@ def main():
     manifest_path = Path(args.path)
     root = manifest_path.parent
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    strict = strict_build_number(find_project_root(manifest_path.parent))
+    needs_lookup = any(isinstance(v, str)
+                       for release in manifest['files']
+                       for v in release['metadata'].get('gameVersions', []))
+    by_name, groups = load_version_index(root / 'game-versions.json') if needs_lookup else ({}, {})
     remote = remote_display_names(session, args.project_id)
     if remote:
         print('线上已有文件：', len(remote))
 
     for release in manifest['files']:
         label = release['minecraft']
-        display_name = release['metadata'].get('displayName', '')
+        metadata = dict(release['metadata'])
+        metadata['gameVersions'] = resolve_version_ids(
+            metadata.get('gameVersions', []), by_name, groups)
+        display_name = metadata.get('displayName', '')
         result_path = root / f'upload-result-{label}.json'
         attempt_path = root / f'upload-attempt-{label}.json'
 
@@ -125,28 +182,39 @@ def main():
             raise SystemExit(f'{label} 有未完成的上传记录，先核对线上文件列表再重试')
 
         artifact = Path(release['artifact'])
-        if '+build.' in artifact.name or '+build.' in display_name:
+        if strict and ('+build.' in artifact.name or '+build.' in display_name):
             raise SystemExit(
-                f'{label} 带 +build.N：只有正式构建产物能上传，'
-                f'jar 名与 displayName 都不许带编号')
+                f'{label} 带 +build.N：这个工程用 zershyan-mcmod-style，'
+                f'jar 名与 displayName 都只能用正式构建产物')
         digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
         if digest != release['sha256']:
             raise SystemExit(f'{label} 的产物已变化，停止上传')
         attempt_path.write_text(json.dumps({
             'startedUtc': datetime.now(timezone.utc).isoformat(),
             'sha256': digest,
-            'metadata': release['metadata'],
+            'metadata': metadata,
         }, ensure_ascii=False, indent=2), encoding='utf-8')
 
         multipart = CurlMime()
         multipart.addpart(name='metadata', content_type='application/json',
-                          data=json.dumps(release['metadata'], ensure_ascii=False).encode('utf-8'))
+                          data=json.dumps(metadata, ensure_ascii=False).encode('utf-8'))
         multipart.addpart(name='file', filename=artifact.name,
                           content_type='application/java-archive', local_path=str(artifact))
         response = session.post(
             f'{BASE}/projects/{args.project_id}/upload-file', multipart=multipart, timeout=100)
         print(label, '上传 HTTP', response.status_code)
-        (root / f'upload-response-{label}.txt').write_text(response.text, encoding='utf-8')
+        response_path = root / f'upload-response-{label}.txt'
+        response_path.write_text(response.text, encoding='utf-8')
+        if response.status_code >= 400:
+            try:
+                body = response.json()
+                detail = body.get('errorMessage') or body.get('message') or ''
+            except Exception:
+                detail = response.text[:500]
+            attempt_path.unlink(missing_ok=True)
+            raise SystemExit(
+                f'{label} 上传被拒（HTTP {response.status_code}）：{detail}\n'
+                f'原始响应：{response_path}')
         response.raise_for_status()
 
         result = response.json()

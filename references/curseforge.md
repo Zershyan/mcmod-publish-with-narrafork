@@ -60,19 +60,87 @@ python scripts/cf/upload.py query curseforge
 - Java 版本在 `2`（`Java 8` ~ `Java 25`）
 - 环境在 `75208`（`Client` / `Server`）
 
-`gameVersions` 里要同时给：MC 版本、加载器、Java 版本、Client/Server。名称必须与接口返回完全一致，`1.21.1` 不等于 `1.21.11`。
+`gameVersions` 里要同时给：MC 版本、加载器、Java 版本、Client/Server。接口**只要整数 ID**，传名称会 400：`Expected Integer but got String. Path 'gameVersions[0]'`。
+
+manifest 里照抄 `game-versions.json` 的 `name` 就行，`upload.py` 发请求前自己换成 ID（同名条目按版本组挑，挑不出来会报错并列候选）：
+
+```
+["1.20.1", "Forge", "Java 17", "Client", "Server"]
+→ [9990, 7498, 8326, 9638, 9639]
+```
+
+要手工核对某条时，按名称查它落在哪个版本组：
+
+```bash
+python - <<'EOF'
+import json
+data = json.load(open('curseforge/game-versions.json', encoding='utf-8'))
+for name in ['1.20.1', 'Forge', 'Java 17', 'Client', 'Server']:
+    print(name, [(d['id'], d['gameVersionTypeID']) for d in data if d['name'] == name])
+EOF
+```
+
+`1.20.1` 在类型 `75125`（1.20.x 组）下是 `9990`，同名的 `9993`、`9994` 属于别的类型组，别选错。
 
 ## 项目创建
 
-CF 没有建项目的 API，只能网页填表。用生成器出控制台脚本：
+CF 没有建项目的 API，只能网页填表：生成一段控制台脚本，在**已登录的作者后台**里执行。
 
 ```bash
 python scripts/cf/create_project.py curseforge/cf_create_project.json
 node --check curseforge/cf_create_project_fill.js
+```
+
+**默认用 browsermcp 跑**，它连的是用户自己已登录的 Chrome，登录态现成：
+
+```
+goto https://authors.curseforge.com/#/projects/create
+eval <curseforge/cf_create_project_fill.js 的全部内容>
+console
+```
+
+脚本自己过 Choose Game、填 General / Description / License，最后点创建并打印 `projectId`。执行前确认：**界面切英文、关闭浏览器翻译**，否则字段匹配不到。中途停在某一步时，处理完页面提示**再执行一次**，会从当前步骤接着走。
+
+**没有 browsermcp** 时回落到人工粘贴：
+
+```bash
 powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_create_project_fill.js' | Set-Clipboard"
 ```
 
-用户在 Create A Project 页面 F12 粘贴运行。要求：**界面切英文、关闭浏览器翻译**，否则所有字段匹配不到。
+用户在 Create A Project 页面 F12 粘贴运行。
+
+用别的浏览器自动化工具注入时（非 MCP），注意 https 页面 `fetch('http://127.0.0.1:…')` 会被私有网络访问策略拦掉（预检 501，补 `OPTIONS` 也没用）。可行通道是把脚本文本写进 `window.name`，导航到目标站后执行：
+
+```html
+<!-- loader.html：本地静态服务目录里 -->
+<script>
+  fetch('cf_create_project_fill.js').then(r => r.text()).then(t => {
+    window.name = t;
+    document.title = 'loaded ' + t.length;
+  });
+</script>
+```
+
+```js
+// 在 authors.curseforge.com 页面执行，执行完刷新页面清掉
+(0, eval)(window.name);
+```
+
+MCP 的 `eval` 直接把脚本塞进页面，不需要这一套。
+
+**建项后拿不到 slug**：创建成功跳转的地址是 `/projects/<ID>/files`，从 URL 取会得到 `files`。slug 去作者后台项目设置页看，或问用户；公开页有 Cloudflare 人机校验，抓不到。
+
+脚本体积的大头是图标 base64。MCP 的 `eval` 传不动时，用 `--no-icon` 出瘦脚本，图标改用 `upload` 或页面上手动传：
+
+```bash
+python scripts/cf/create_project.py curseforge/cf_create_project.json --no-icon
+```
+
+自动化工具会把跑得久的任务误判成超时（但页面里其实还在跑）。这时用单步模式，一次只推进一页，每次执行完打印当前步骤，反复执行即可：
+
+```bash
+python scripts/cf/create_project.py curseforge/cf_create_project.json --no-icon --step
+```
 
 `autoCreate` 默认 true，脚本会自己点创建按钮并读回 `projectId`/`slug`。**启用前必须用交互式提问单独确认一次**项目名、分类、许可证。
 
@@ -80,13 +148,24 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_c
 
 ## 上传
 
-清单格式：
+清单由脚本生成，不要手写：
+
+```bash
+python scripts/cf/make_manifest.py <表单 payload.json> --out curseforge/release-manifest.json
+```
+
+它按工程实际情况挑包、算 sha256、拼 `displayName` 与 `gameVersions`：
+
+- **装了 style skill 且符合规范**：取 `build/libs/<modid>-<mod_version>-<mc>.jar`
+- **其他工程**：在 `build/libs` 里按版本号找主包，`displayName` 就是文件名去掉 `.jar`
+
+生成结果（核对时看这几项）：
 
 ```json
 {
   "files": [{
     "minecraft": "1.21.1",
-    "artifact": "build/libs/xxx.jar",
+    "artifact": "build/libs/examplemod-2.0.0-1.21.1.jar",
     "sha256": "…",
     "metadata": {
       "changelog": "英文块\n\n---\n\n中文块",
@@ -108,9 +187,8 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 python scripts/cf/upload.py list curseforge --project-id <ID>
 ```
 
-- `displayName` 拼成 `<modid>-<mod_version>-<mc版本>`，即正式 jar 文件名去掉 `.jar`，例 `examplemod-2.0.0-1.21.1`
-- **不要带 `+build.N`**：带编号的是 `buildAlpha` 产物，既不能上传，也不要写进显示名
-- 脚本会直接拒绝 jar 名或 `displayName` 带 `+build.` 的条目
+- `displayName` = 上传的 jar 文件名去掉 `.jar`。装了 style skill 的工程里正式包是 `<modid>-<mod_version>-<mc版本>.jar`，其他工程按 `build.gradle` 的实际命名
+- 只有符合 style 规范的工程才因为 `+build.` 被拒；那类工程的正式包本来就不带编号
 - `artifact` 上传前校验 sha256
 - 一个 JAR 只对应一组「MC 版本 + 加载器」，多个组合要拆成多条
 - `relations.projects[].type` 常用 `requiredDependency`、`optionalDependency`、`incompatible`
