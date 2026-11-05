@@ -1,8 +1,8 @@
 # mcmod-publish-with-narrafork
 
-把 Minecraft 模组发布到 CurseForge，可选同步到 MC百科：读工程事实、判断项目是否存在、构建正式包、创建或复用 CF 项目、上传版本文件、填写百科条目与资料、处理登录与验证码、跟进审核退回。
+把 Minecraft 模组发布到 CurseForge，可选同步到 MC百科：体检工程、构建正式包、判断或创建 CF 项目、上传版本文件、填写百科条目与资料、处理登录与验证码、跟进审核退回。
 
-要执行发布，直接看 [SKILL.md](SKILL.md)——开局一条 `preflight.py`，之后按输出走。这份 README 是给维护者和第一次接触的人看的。
+要执行发布，直接看 [执行手册](SKILL.md)——开局跑一条体检命令，之后按输出走。这份 README 是给维护者和第一次接触的人看的。
 
 ## 入口
 
@@ -15,6 +15,7 @@ python scripts/preflight.py
 | 文档 | 内容 |
 |---|---|
 | [SKILL.md](SKILL.md) | 执行手册：开局一条命令，然后七步走完 |
+| [总流程图](references/flow.md) | 一张图看懂整体走向与三处阻塞点 |
 | [产物与数据流](references/workflow.md) | 每一步留下什么文件、下一步读什么 |
 | [CurseForge](references/curseforge.md) | 令牌、建项目、上传、依赖、状态语义 |
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、审核 |
@@ -39,7 +40,7 @@ scripts/
   project/           工程侧：版本号回填、占位图标生成与样式存档（.narrafork/icon-style.json）
 ```
 
-百科**优先用本地脚本**（`submit.py`，需要一份 cookie）：有 cookie 直接跑，没有就用 `Browser` 工具登录后 `cookies.py dump`，或让用户从 F12 复制 `Cookie` 头。只有这些都不成立时，才用 browsermcp 在页面里跑 `console.py` 的脚本，再不行就由用户自己 F12 粘贴。
+百科**优先用本地脚本**（`submit.py`，需要一份 cookie）。四步拿到 cookie，任何一步成功就回到第一步：手上有的先试 → 过期了让 MCP 读页面 cookie → MCP 没登录就开浏览器让用户登 → 都不行才让用户自己粘贴或整条在浏览器里跑。
 
 ## 表单
 

@@ -144,11 +144,14 @@
 
 ### 拿到的 cookie 用不了
 
-**症状**：从 `document.cookie` 复制 cookie，Python 请求添加页还是未登录状态。
+**症状**：复制了 `document.cookie`，Python 请求添加页还是未登录状态。
 
-**原因**：登录凭证 `dSit_2132_auth` 是 httpOnly，`document.cookie` 读不到。实测页面只有 5 个 cookie，实际有 11 个。
+**原因**：站点改版前后不一样——
 
-**做法**：用 CDP 的 `Storage.getCookies` 从浏览器进程读，见 `scripts/mcmod/cookies.py`。
+- **现在（2026-11 实测）**：`document.cookie` 有 6 个，其中 `Example_auth` 就是登录凭证，且不是 httpOnly。拿它跑 `submit.py --dry-run` 能正常读出添加页版本列表，**够用**。
+- **早前**：登录凭证叫 `dSit_2132_auth` 且是 httpOnly，页面只给 5 个、实际有 11 个，必须走 CDP。
+
+**做法**：先按「够用」试。不灵时用 `scripts/mcmod/cookies.py` 的 CDP 读法对比两边数量，就能判断是不是又移回 httpOnly 了。
 
 ### 登录一直失败
 

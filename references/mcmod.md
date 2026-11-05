@@ -4,43 +4,53 @@
 
 ## 登录与凭据
 
-**本地脚本优先，MCP 是拿不到 cookie 时的下位替代。** 发布、改条目、补资料、处理退回都一样——只要 `submit.py` 能跑，就不该走浏览器。
+本地脚本优先，所以整条链路的**唯一目标就是拿到一份能用的 cookie**。按下面四步走，任何一步拿到就回到第 1 步。
 
-按下面顺序准备凭据，拿到 cookie 就停在第一步：
+### 1. 先看手上的 cookie 还能不能用
 
-### 首选：导出一份 cookie
+```bash
+python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run
+```
 
-有 `Browser` 工具时 launch 一个 headed 会话，让用户在里面登录（QQ 扫码或账号密码），然后从浏览器进程读完整 cookie：
+能打印 JSON 就是有效，直接用 `submit.py`，结束。报未登录或登录态失效，就是过期了，往下走。
+
+### 2. 让 MCP 看看浏览器里还登着没
+
+```
+goto https://www.mcmod.cn/
+```
+
+页头有用户名 = 登录状态还在，直接读 cookie：
+
+```js
+document.cookie
+```
+
+把结果写进 `.narrafork/mcmod-cookie.txt`，回第 1 步。没登录就往下走。
+
+### 3. 有 `Browser` 工具：开个窗口让用户登录
+
+launch 一个可见会话打开登录页，用交互式提问请用户在里面登录（QQ 扫码或账号密码），登完再回来确认。然后从浏览器进程读完整 cookie：
 
 ```bash
 python scripts/mcmod/cookies.py dump --profile <profile目录> --out .narrafork/mcmod-cookie.txt
 ```
 
-profile 目录里有 `DevToolsActivePort`，第一行是调试端口。NarraFork 启动的会话 profile 形如 `%TEMP%\puppeteer_dev_chrome_profile-*`。
+拿到回第 1 步。没有 `Browser` 工具就往下走。
 
-没有 `Browser` 工具时，让用户从 F12 的 Network 复制某次请求的 `Cookie` 请求头，写进同一个文件。
+### 4. 都没有：让用户自己来，二选一
 
-**为什么不能用 `document.cookie`**：登录凭证 `dSit_2132_auth` 是 httpOnly，页面里读不到。实测 `document.cookie` 只有 5 个，CDP 能拿到 11 个。
+用交互式提问让用户选：
 
-拿到就走 `submit.py`，验证码在本地取图问用户。
+**A. 只给 cookie** —— 他在百科页面按 F12，控制台执行 `copy(document.cookie)`，把结果贴给你；写进文件后回第 1 步。
 
-### 下位替代：browsermcp 在页面里跑控制台脚本
-
-上面两条都走不通时，才用 MCP——它连的是用户已登录的 Chrome，页面自带登录态和验证码：
-
-1. `goto https://www.mcmod.cn/` 看页头有没有用户名；没登录就让用户在这个浏览器里登录
-2. `python scripts/mcmod/console.py docs/mcmod/mod-config.json` 生成脚本
-3. `eval <脚本内容>` 执行，`console` 看返回
-
-### 最后兜底：用户自己 F12 粘贴
-
-连 MCP 都没有时：
+**B. 整条流程都在他浏览器里跑** —— 生成控制台脚本，用户自己粘贴、填验证码、点提交：
 
 ```bash
 python scripts/mcmod/console.py docs/mcmod/mod-config.json
 ```
 
-生成一段 JS，用户在对应页面（模组条目 `/class/add/`，资料条目 `/item/add/<模组ID>/`）**先填好验证码**，再 F12 粘贴运行。脚本自己填表、组装 `getEditorData` 并 POST 到 `doEdit`。
+把脚本复制到剪贴板（或让用户自己复制），再给添加条目页的链接 `https://www.mcmod.cn/class/add/`。
 
 | 优点 | 限制 |
 |---|---|
@@ -49,6 +59,12 @@ python scripts/mcmod/console.py docs/mcmod/mod-config.json
 | 验证码由用户在页面上填，无需额外交互 | 页面改版时模板要跟着改 |
 
 模板在 `scripts/mcmod/console/`：`module.js` 是模组条目，`item.js` 是资料条目。数据格式见脚本头部注释。
+
+### 为什么 `document.cookie` 现在够用
+
+实测（2026-11）：`document.cookie` 能读到 6 个，其中 **`Example_auth` 就是登录凭证，而且不是 httpOnly**。用这份 cookie 跑 `--dry-run` 能正常读出添加页的版本列表。
+
+早前「只有 5 个、缺 httpOnly 的 `dSit_2132_auth`」已经不成立——站点 cookie 前缀换成了 `Example_`，凭证也移出了 httpOnly。哪天又不灵了，用 CDP 对比一次 `document.cookie` 与 `Storage.getCookies` 的数量就能判断。
 
 ### 账号密码登录
 

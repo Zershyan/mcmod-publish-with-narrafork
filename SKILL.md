@@ -1,6 +1,6 @@
 ---
 name: mcmod-publish-with-narrafork
-description: 把 Minecraft 模组发布到 CurseForge，可选同步到 MC百科：读工程事实、判断项目是否已存在、构建正式包、创建 CF 项目、上传版本文件、填写百科条目与资料、处理登录与验证码、跟进审核退回。用户要求发布模组、上传新版本、建 CurseForge 项目、更新或补全百科条目与资料、处理审核退回时使用；不用于模组代码开发。
+description: 把 Minecraft 模组发布到 CurseForge，可选同步到 MC百科：体检工程、构建正式包、判断或创建 CF 项目、上传版本文件、填写百科条目与资料、处理登录与验证码、跟进审核退回。用户要求发布模组或新版本、建 CurseForge 项目、更新补全百科条目与资料、处理审核退回时使用；不用于模组代码开发。
 ---
 
 # 模组发布
@@ -27,13 +27,20 @@ python scripts/preflight.py
 
 表单的两个细节：**`show` 不支持 `wait`**，画完就能接着跑，流程里不用；没有 GenUI 时不要停，有交互式提问就按字段分组问（每次不超过 4 项），没有就用普通消息把问题列成清单——这条让 skill 不依赖 NarraFork 也能跑完。
 
-## 第 1 步：问版本与构建（仅当 preflight 判定符合 style 规范）
+## 第 1 步：版本与构建
 
-preflight 输出**「构建规范 符合」**才走这段，否则直接跳到第 2 步——不是「装了 style skill」就走，得真的符合那三条约定。
+**构建是必做的**，区别只在于要不要先问版本：
+
+| preflight 结果 | 做什么 |
+|---|---|
+| 构建规范「符合」 | 用 `FormBuild` 问分支与 `mod_version` → 勾了回填就 `version.py` → 逐分支 `./gradlew build` |
+| 不符合 | 直接 `./gradlew build`，版本号沿用 `build.gradle` 里的值，不用问 |
 
 ```bash
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 ```
+
+### 符合 style 时：先问版本
 
 用 `assets/forms/FormBuild.tsx` 出表单，让用户逐行填分支和 `mod_version`：
 
@@ -45,13 +52,19 @@ cp assets/forms/FormBuild.data.example.ts .narrafork/gen_ui/build/data.ts
 # GenUI render({path: '.narrafork/gen_ui/build', wait: true})
 ```
 
-拿到提交结果（`JSON.parse(values.payload)`）后再动手：
+拿到提交结果（`JSON.parse(values.payload)`）后，勾了「回填至项目」就跑：
 
-- 勾了「回填至项目」→ `python scripts/project/version.py main=0.0.1 1.20.1=0.0.1 --commit`。**多分支必须加 `--commit`**：git 不允许带着未提交的 `gradle.properties` 切分支，不提交就只有第一个分支改得动。版本已经是目标值的分支会自动跳过，不产生空提交
+```bash
+python scripts/project/version.py main=0.0.1 1.20.1=0.0.1 --commit
+```
+
+**多分支必须加 `--commit`**：git 不允许带着未提交的 `gradle.properties` 切分支。版本已经是目标值的分支会自动跳过，不产生空提交。
+
+### 两种情况都要：跑构建
+
 - **自己跑 `./gradlew build`**，绝不跑 `buildAlpha`（后者递增编号并回写属性，属开发动作）
 - 构建失败就如实报告停下，不要改用 `buildAlpha` 绕过
-
-多分支工程逐个分支读、逐个构建，`mod_version` 与 `minecraft_version` 可能不一样。
+- 多分支工程逐个分支构建，`mod_version` 与 `minecraft_version` 可能不一样
 
 ## 第 2 步：项目存不存在
 
@@ -181,27 +194,20 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 **不要再问一遍要不要发百科**——那个开关就是用户的选择，和第 2 步问「有没有现成 CF 项目」是两回事，不要在同一轮一起问。
 
-### 6.1 选提交通道
+### 6.1 先弄到一份能用的 cookie
 
-**本地脚本优先，MCP 是拿不到 cookie 时的下位替代。**
+本地脚本优先，所以整条链路的目标就是拿到 cookie。**四步，任何一步拿到就回到第 1 步。**
 
-```bash
-ls .narrafork/mcmod-cookie.txt
-```
-
-| 顺序 | 条件 | 做法 |
+| 步骤 | 情况 | 做法 |
 |---|---|---|
-| 1 | 有 cookie 文件 | 直接走 6.3 的 `submit.py`，这是首选路径 |
-| 2 | 没 cookie，有 `Browser` 工具 | 起可见会话让用户登录，再 `python scripts/mcmod/cookies.py dump --profile <目录> --out .narrafork/mcmod-cookie.txt`，回到 1 |
-| 3 | 没 cookie，用户愿意配合 | 让他从 F12 的 Network 复制 `Cookie` 请求头，写进同一个文件，回到 1 |
-| 4 | 前三条都走不通 | 才用 browsermcp 在页面里跑 `console.py` 的脚本——浏览器自带登录态，不需要 cookie |
-| 5 | 连 MCP 都没有 | `console.py` 生成脚本，用户自己在百科页面 F12 粘贴运行 |
+| 1 | 手上有 cookie 文件 | `submit.py --dry-run` 能打印 JSON 就有效，直接提交，结束 |
+| 2 | 过期了 | browsermcp 打开百科看页头有没有用户名；在就 `eval "document.cookie"` 存进文件，回 1 |
+| 3 | MCP 里也没登录 | 有 `Browser` 工具就开窗口让用户登录，`cookies.py dump` 后回 1；没有就往下 |
+| 4 | 都没有 | 交互式提问二选一：**A** 用户 F12 执行 `copy(document.cookie)` 贴给你；**B** 给控制台脚本 + 添加页链接，他自己粘贴提交 |
 
-**任何修改也一样**：改已有条目、补资料、处理退回，都先走本地脚本（`submit.py` 带 `redo-id`），MCP 只在前三条都不成立时兜底。
+细节见 [MC百科](references/mcmod.md#登录与凭据)。
 
-**不要用 `document.cookie`**，拿不到 httpOnly 凭证。
-
-拿到 cookie 时验证一下：`python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run` 能打印 JSON 就是有效。
+**任何修改也一样**：改已有条目、补资料、处理退回，都先走本地脚本（`submit.py` 带 `redo-id`）。
 
 ### 6.2 有没有现成条目
 
@@ -268,6 +274,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 | 文档 | 什么时候看 |
 |---|---|
+| [总流程图](references/flow.md) | 想先看懂整体走向 |
 | [产物与数据流](references/workflow.md) | 每一步留下什么文件、下一步读什么 |
 | [CurseForge](references/curseforge.md) | 令牌、建项目、上传、依赖、版本标签、状态语义 |
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、枚举、审核 |
