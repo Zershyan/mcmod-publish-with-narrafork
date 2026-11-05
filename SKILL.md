@@ -177,7 +177,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run
 python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha-url
 ```
 
-把 `.narrafork/mcmod-captcha.png` 给用户看（GenUI 里贴图或直接说路径），拿到 3～6 个字符后**立刻**提交：
+把 `.narrafork/mcmod-captcha.png` 给用户看，**用交互式提问索要验证码**，不要发一条普通消息等回复。拿到字符后立刻提交：
 
 ```bash
 python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
@@ -185,7 +185,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 验证码每次请求都会刷新，**取图和提交之间不要再去请求添加页**，所以版本映射走缓存。
 
-没有验证码时可以先 `--dry-run` 只看提交体。`state: 0` 表示成功并返回条目地址。
+成功返回 `{"state": 0, "url": "/verify.html?..."}`，条目进入审核队列，通过前不会计入模组的资料数量。返回 `117` 表示数据或验证码有问题，两者共用这个码。
 
 ## 第 7 步：核对审核
 
@@ -208,8 +208,11 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 - 缺令牌、缺 cookie，且所有回退路径都不可用
 - 需要新建 CF 项目
 - 四类工程里读不到的信息
+- 需要验证码或登录凭据
 - 线上已有同名条目但内容不同
 - 某个「MC 版本 × 加载器」组合找不到对应 JAR
+
+**凡是需要用户输入的内容（验证码、令牌、cookie、作者名），一律用交互式提问，不要发普通消息等对方回复。**
 
 ## 参考
 
