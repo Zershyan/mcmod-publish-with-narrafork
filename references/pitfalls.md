@@ -62,6 +62,14 @@
 
 **做法**：看 `build.gradle` 的 `base { archivesName }`。配了 `archivesName = mod_id` 时产物前缀是 modid（`adcore-…`），没配时用工程目录名。
 
+### 拿 alpha 包去发布
+
+**症状**：CurseForge 上的文件名带 `+build.5` 这类后缀，或者和同版本线的其他产物对不上。
+
+**原因**：`build/libs` 里同时躺着普通 `build` 和 `buildAlpha` 的产物，选错了。`zershyan-mcmod-style` 规范里，带 `+build.<N>` 的是 alpha 测试构建。
+
+**做法**：只发**文件名不带 `+build.N`** 的那个。两个都没编号时按版本号取最新；只剩带编号的，说明还没跑过普通 `build`，先构建再发。
+
 ### 依赖漏声明
 
 **症状**：CF 上玩家装了模组但缺前置报错。

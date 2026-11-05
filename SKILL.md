@@ -63,6 +63,8 @@ ls src/main/resources/logo.png
 
 要拿到：modid、英文名、版本号、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 路径规则、语言文件位置。
 
+**如果工程装了 `zershyan-mcmod-style`**：发布只用文件名不带 `+build.N` 的 jar，带编号的是 `buildAlpha` 测试产物。同时存在两种时选不带编号的；只剩带编号的说明还没跑普通 `build`，先构建，不要拿 alpha 包顶替。详见 [字段来源](references/field-sources.md#工程事实)。
+
 多分支工程**逐个分支读**，版本号规则可能不一样。
 
 读完汇报一张表，缺的标出来。工程里永远拿不到的只有四类：**中文名、CF 分类、百科模组元素、百科作者名**。
