@@ -1,6 +1,8 @@
 # mcmod-publish-with-narrafork
 
-把 Minecraft 模组发布到 CurseForge 与 MC百科：读工程事实、判断项目是否存在、上传 JAR、填写百科条目、处理登录与验证码、核对审核附言。
+把 Minecraft 模组发布到 CurseForge，可选同步到 MC百科：读工程事实、判断项目是否存在、构建正式包、创建或复用 CF 项目、上传版本文件、填写百科条目与资料、处理登录与验证码、跟进审核退回。
+
+要执行发布，直接看 [SKILL.md](SKILL.md)——开局一条 `preflight.py`，之后按输出走。这份 README 是给维护者和第一次接触的人看的。
 
 ## 入口
 
@@ -12,8 +14,8 @@ python scripts/preflight.py
 
 | 文档 | 内容 |
 |---|---|
-| [SKILL.md](SKILL.md) | 七步流程，每步都是「跑 → 看 → 过」 |
-| [完整流程](references/workflow.md) | 七个步骤的判定条件与产物 |
+| [SKILL.md](SKILL.md) | 执行手册：开局一条命令，然后七步走完 |
+| [产物与数据流](references/workflow.md) | 每一步留下什么文件、下一步读什么 |
 | [CurseForge](references/curseforge.md) | 令牌、建项目、上传、依赖、状态语义 |
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、审核 |
 | [字段来源](references/field-sources.md) | 每个字段从哪取 |
@@ -31,17 +33,17 @@ assets/
   content-templates.md  百科正文模板
 scripts/
   preflight.py       开局体检：工程事实、构建规范、凭据、下一步
-  cf/                CurseForge：请求封装、上传、清单生成、建项目脚本生成
+  cf/                CurseForge：请求封装、上传、清单生成、建项目、补链接
   mcmod/             百科：cookie、作者查询、条目提交
   mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
   project/           工程侧：版本号回填、占位图标生成（样式存 .narrafork/icon-style.json）
 ```
 
-百科按当前环境选通道，从上往下试：**有 browsermcp** 直接在页面里跑 `console.py` 生成的控制台脚本（浏览器自带登录态，不需要 cookie）；**有 `Browser` 工具**就登录后 dump cookie，走 `submit.py` 本地提交；**都没有**就把脚本给用户，自己 F12 粘贴。
+百科的提交通道按环境能力降级：有 browsermcp 就在页面里跑控制台脚本（不需要 cookie），有 `Browser` 工具就 dump cookie 走 `submit.py`，都没有就把脚本给用户手动粘贴。细节见 SKILL.md 第 6 步。
 
 ## 表单
 
-四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。表单**优先用 GenUI**（缺工具或调用失败时降级成逐项询问，见 SKILL.md 开局段），并且**一律用 `render` 带 `wait: true`**——它会停在表单上直到用户提交；`show` 不支持 `wait`，流程里不用。
+四个数据驱动的 GenUI 模板，只改 `data.ts`，`App.tsx` 不动。用法与字段见 [assets/forms/README.md](assets/forms/README.md)，流程约束（必须带 `wait`、缺工具怎么降级）见 SKILL.md 开局段。
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>
@@ -49,18 +51,17 @@ cp assets/forms/FormFull.tsx .narrafork/gen_ui/<名称>/App.tsx
 cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/<名称>/data.ts
 ```
 
-改 `data.ts` 后 `GenUI render({path: 该目录, wait: true})`，它会阻塞到用户点提交。四个模板的用途见 [assets/forms/README.md](assets/forms/README.md)。
+改完 `data.ts` 用 `GenUI render({path: 该目录, wait: true})` 打开。
 
-## 运行依赖
+## 依赖
 
 ```bash
 python -m pip install --target .narrafork/pylibs curl_cffi
 python -m pip install --target .narrafork/pylibs websocket-client   # 只有从 CDP 读 cookie 时需要
-export CF_HTTP_RUNTIME=$PWD/.narrafork/pylibs
-export PYTHONPATH=$PWD/.narrafork/pylibs
+python -m pip install Pillow                                        # 生成占位图标、处理封面
 ```
 
-`curl_cffi` 用于所有 CurseForge 请求（Cloudflare 按 TLS 指纹拦截普通客户端）。
+脚本会自己找 `.narrafork/pylibs`（`cfhttp.py` 里探测），不用手动设 `CF_HTTP_RUNTIME`。`curl_cffi` 用来伪装 TLS 指纹，普通客户端会被 Cloudflare 拦。
 
 ## 凭据
 

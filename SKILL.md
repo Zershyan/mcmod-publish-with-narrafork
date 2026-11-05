@@ -1,13 +1,13 @@
 ---
 name: mcmod-publish-with-narrafork
-description: 把 Minecraft 模组发布到 CurseForge 与 MC百科。读工程事实、判断项目是否已存在、上传 JAR、填写百科条目与资料、处理登录与验证码、核对审核附言。用户要求发布模组、上传版本、更新百科、补资料或处理退回时使用；不用于模组代码开发。
+description: 把 Minecraft 模组发布到 CurseForge，可选同步到 MC百科：读工程事实、判断项目是否已存在、构建正式包、创建 CF 项目、上传版本文件、填写百科条目与资料、处理登录与验证码、跟进审核退回。用户要求发布模组、上传新版本、建 CurseForge 项目、更新或补全百科条目与资料、处理审核退回时使用；不用于模组代码开发。
 ---
 
 # 模组发布
 
 一条流水线：CurseForge 必发，MC百科可选。信息从工程读，读不到的才问用户。
 
-每步都是**跑 → 看 → 过**三段。照着做，不需要自己判断走哪条分支。
+每步都写了「做什么」和「卡住怎么办」，照着做即可。
 
 ## 开局：一条命令拿到全部状态
 
@@ -17,21 +17,19 @@ python scripts/preflight.py
 
 它一次给出工程事实、构建规范、可用凭据、已有记录，末尾列出「下一步」。**按那个顺序做，做完再跑一次，直到没有 ✗。**
 
-三条规则覆盖所有分支，不用再判断：
+三个判断到这里就定完了，后面不再分支：
 
 | 情况 | 做法 |
 |---|---|
-| 输出「构建规范 符合」 | 只上传不带 `+build.N` 的 jar；不符合就按 `build.gradle` 的实际产物命名 |
-| 要出表单 | 有 GenUI 就 `render({path, wait: true})`；没有或调用失败就**逐项询问**，不要停 |
-| 缺令牌 / 依赖 / cookie | 见 preflight 的「下一步」，逐条补 |
+| 构建规范「符合」 | 只上传不带 `+build.N` 的 jar；不符合就按 `build.gradle` 的实际产物命名 |
+| 要出表单 | 用 `render` 带 `wait: true`；没有 GenUI 或调用失败就逐项询问 |
+| preflight 里有 ✗ | 按「下一步」逐条补 |
 
-**没有 GenUI 不要停**：直接降级成逐项询问——有交互式提问就按表单字段分组问，每次不超过 4 项；连提问工具都没有，就用普通消息把问题列成清单让用户一次回完。这条让 skill 不依赖 NarraFork 也能跑，只是慢一点。
+表单的两个细节：**`show` 不支持 `wait`**，画完就能接着跑，流程里不用；没有 GenUI 时不要停，有交互式提问就按字段分组问（每次不超过 4 项），没有就用普通消息把问题列成清单——这条让 skill 不依赖 NarraFork 也能跑完。
 
-有 GenUI 时一律 `render` 带 `wait: true`：**`show` 不支持 `wait`**，画完就能接着跑，流程里不要用。
+## 第 1 步：问版本与构建（仅当 preflight 判定符合 style 规范）
 
-## 第 1 步：版本与构建（装了 style skill 才有这一步）
-
-省掉判断：preflight 输出「构建规范 符合」就走这段，否则跳到第 2 步。
+preflight 输出**「构建规范 符合」**才走这段，否则直接跳到第 2 步——不是「装了 style skill」就走，得真的符合那三条约定。
 
 ```bash
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
@@ -70,7 +68,7 @@ cat curseforge/project.json 2>/dev/null || echo "无记录"
 
 **不要自己去 CurseForge 搜项目**，公开页有 Cloudflare 人机校验。
 
-建项目是唯一不可逆的动作，所以它排在第 5 步 `FormConfirm` 之后：用户确认清单时才一并授权。脚本优先用 browsermcp 在用户已登录的 Chrome 里跑，没有 MCP 才回落人工粘贴。
+建项目是唯一不可逆的动作，所以它排在第 5 步 `FormConfirm` 之后——用户确认清单时才一并授权。
 
 ## 第 3 步：版本标签
 
@@ -96,6 +94,8 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 - 已有项目只发新版本时改用 `assets/forms/FormRelease.tsx`
 - 字段说明见 [表单模板](assets/forms/README.md)
 
+**没收到提交结果**（超时、被中断、用户关掉表单）＝还没确认：不构建、不上传、不提交百科，也不要发普通消息问一遍来代替等待。用户迟迟不提交就报告停在哪一步，不要挑默认值继续。
+
 ### 占位图标
 
 工程没有图标时用它，样式可以在表单面板里调：
@@ -110,8 +110,6 @@ python scripts/project/make_icon.py <模组英文名> --out src/main/resources/l
 ```
 
 样式文件会被自动读取；要临时覆盖就加 `--font georgiab.ttf --font-size 56 --fg "#3b1f0e"` 这类参数，加 `--save-style` 则一并写回配置。多行用 `--lines "Forge|Attachment"`。
-
-没收到提交结果（超时、被中断、用户关掉）＝还没确认：不构建、不上传、不提交百科，也不要发普通消息问一遍来代替等待。
 
 ### 提交结果怎么变成清单
 
@@ -140,8 +138,11 @@ cp assets/forms/FormConfirm.data.example.ts .narrafork/gen_ui/confirm/data.ts
 
 用户提交后才动手，顺序固定：
 
-1. `project.json` 不存在 → 按 [建项目](references/curseforge.md#项目创建) 建，拿到 `projectId` / `slug`。建项脚本会顺手勾上 Project Pages（向导里没这一项就在报告里提示）
-2. 补填向导里没有的链接（`cfSourceUrl` 等）：
+**① 建项目**（仅当 `project.json` 不存在）
+
+按 [建项目](references/curseforge.md#项目创建) 走，拿到 `projectId` / `slug`。脚本会顺手勾上 Project Pages，向导里没这一项就在报告里提示。
+
+**② 补项目链接**（向导里没有 Source / Issues / Wiki）
 
 ```bash
 python scripts/cf/set_links.py --source <GitHub 地址>
@@ -149,7 +150,7 @@ python scripts/cf/set_links.py --source <GitHub 地址>
 
 在项目设置页 `eval` 生成的脚本，`console` 看结果，填完手动点保存。
 
-3. 上传：
+**③ 上传**
 
 ```bash
 python scripts/cf/upload.py upload curseforge/release-manifest.json \
@@ -214,17 +215,11 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 配置写 `"kind": "item"`，验证码换成 `item_add_<模组ID>`。改已有资料带 `redo-id=<资料ID>`，会**替换**而不是新建。字段与正文见 [mcmod](references/mcmod.md#资料条目)、[正文模板](assets/content-templates.md)。
 
-## 第 7 步：核对审核
+## 第 7 步：处理审核退回
 
-用户把退回附言贴过来，按资料 ID 找到条目再改：
+用户把退回附言贴过来，按资料 ID 找到条目再改：已通过的走 `/item/edit/<资料ID>/`，待审的走 `/item/add/<模组ID>-<资料ID>/`。
 
-```
-已通过再编辑  /item/edit/<资料ID>/
-待审再编辑    /item/add/<模组ID>-<资料ID>/
-审核列表      https://www.mcmod.cn/verify.html?order=createtime&selfonly=1
-```
-
-常见退回原因见 [mcmod](references/mcmod.md#审核)。
+常见的退回原因见 [mcmod](references/mcmod.md#审核)。审核列表链接见下一节。
 
 ## 汇报必须带三条链接
 
@@ -255,10 +250,11 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 | 文档 | 什么时候看 |
 |---|---|
-| [完整流程](references/workflow.md) | 想看七步的完整判定与产物 |
+| [产物与数据流](references/workflow.md) | 每一步留下什么文件、下一步读什么 |
 | [CurseForge](references/curseforge.md) | 令牌、建项目、上传、依赖、版本标签、状态语义 |
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、枚举、审核 |
 | [字段来源](references/field-sources.md) | 某个字段该从哪取 |
 | [踩坑记录](references/pitfalls.md) | 报错或行为不符预期时先查这里 |
 | [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md) | 工程符合 style 规范时的产物、版本与资源约定 |
 | [表单模板](assets/forms/README.md) | 四个 GenUI 表单的用途与数据格式 |
+| [正文模板](assets/content-templates.md) | 百科资料条目的正文怎么写 |

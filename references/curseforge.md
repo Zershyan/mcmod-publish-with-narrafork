@@ -1,5 +1,9 @@
 # CurseForge
 
+发布的主平台。这里写令牌、版本标签、建项目、上传清单、依赖声明与状态语义。
+
+所有请求都要走 `cfhttp` 的 `curl_cffi`（Chrome TLS 指纹），普通 HTTP 客户端会被 Cloudflare 挑战页挡下。
+
 ## 令牌
 
 上传用 **API Token**，不是 API Key：
