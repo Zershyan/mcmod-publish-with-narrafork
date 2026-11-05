@@ -24,10 +24,10 @@ ls gradle.properties build.gradle
 **2. CurseForge 令牌**
 
 ```bash
-python scripts/cf/upload.py query .tmp 2>&1 | head -3
+python scripts/cf/upload.py query .narrafork/tmp 2>&1 | head -3
 ```
 
-看到 `Versions HTTP 200` 说明可用，删掉 `.tmp` 继续。报 `缺少 CURSEFORGE_API_TOKEN` 就停下来：
+看到 `Versions HTTP 200` 说明可用。报 `缺少 CURSEFORGE_API_TOKEN` 就停下来：
 
 > 需要 CurseForge API Token 才能上传。去 https://authors.curseforge.com/#/settings/api-tokens 生成（只显示一次，当场复制），然后设置环境变量 `CURSEFORGE_API_TOKEN`。设好后告诉我。
 
@@ -154,7 +154,15 @@ python scripts/mcmod/cookies.py dump --profile <profile目录> --out .narrafork/
 
 profile 目录里有 `DevToolsActivePort` 文件，形如 `%TEMP%\puppeteer_dev_chrome_profile-*`。找不到就用 `ls -d "$TEMP"/puppeteer_dev_chrome_profile-*` 列一下。
 
-**B. 没有 `Browser` 工具**——出控制台脚本让用户自己跑，详见 [mcmod](references/mcmod.md#登录与凭据)。
+**B. 没有 `Browser` 工具，也不想在本地留 cookie**——用控制台脚本兜底：
+
+```bash
+python scripts/mcmod/console.py docs/mcmod/mod-config.json
+```
+
+生成的 JS 在百科页面里运行，浏览器自带登录态和验证码，不需要导出 cookie。用户先填好验证码再 F12 粘贴运行。详见 [mcmod](references/mcmod.md#兜底控制台脚本)。
+
+**C. 都不行**——让用户从 F12 的 Network 里复制 `Cookie` 请求头，用交互式提问收过来。**不要用 `document.cookie`**，那个拿不到 httpOnly 的登录凭证。
 
 拿到后验证：
 
@@ -185,7 +193,13 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 验证码每次请求都会刷新，**取图和提交之间不要再去请求添加页**，所以版本映射走缓存。
 
-成功返回 `{"state": 0, "url": "/verify.html?..."}`，条目进入审核队列，通过前不会计入模组的资料数量。返回 `117` 表示数据或验证码有问题，两者共用这个码。
+成功返回 `{"state": 0, "url": "/verify.html?..."}`。**返回的 url 是审核列表，不是条目地址。**
+
+### 6.4 资料条目（可选）
+
+模组条目建好后，按物品、方块、生物等提交资料。配置写 `"kind": "item"`，流程同上，验证码换成 `item_add_<模组ID>`。字段、分类与再编辑见 [mcmod](references/mcmod.md#资料条目)。
+
+改已有资料时带 `redo-id=<资料ID>`，提交会**替换**原条目而不是新建。
 
 ## 第 7 步：核对审核
 

@@ -10,7 +10,7 @@
 
 **原因**：Cloudflare 按 TLS/HTTP2 指纹识别非浏览器客户端，与令牌无关。
 
-**做法**：只用 `curl_cffi` 的 `impersonate='chrome'`，即 `scripts/cf/http.py`。不涉及破解验证码，只改网络层特征。
+**做法**：只用 `curl_cffi` 的 `impersonate='chrome'`，即 `scripts/cf/cfhttp.py`。不涉及破解验证码，只改网络层特征。
 
 ### 拿 Studio 令牌查项目，返回 403
 
@@ -34,7 +34,7 @@
 
 **原因**：已经运行的进程不会继承新设的环境变量。
 
-**做法**：脚本里加了回退——环境变量读不到时从 `HKCU\Environment` 读。见 `scripts/cf/http.py` 的 `system_env()`。
+**做法**：脚本里加了回退——环境变量读不到时从 `HKCU\Environment` 读。见 `scripts/cf/cfhttp.py` 的 `system_env()`。
 
 ### 上传到一半断了，重跑又传了一次
 

@@ -125,12 +125,12 @@ ls .narrafork/mcmod-cookie.txt
 | 条件 | 做法 |
 |---|---|
 | 有 `Browser` 工具 | launch 可见会话 → 用户登录 → `cookies.py dump` |
-| 没有 `Browser` | 出控制台脚本让用户 F12 跑 |
-| 都不行 | 让用户手工复制 cookie 贴过来 |
+| 没有 `Browser`、或不想留 cookie | `console.py` 生成控制台脚本，用户在页面填好验证码后 F12 运行 |
+| 都不行 | 让用户从 F12 的 Network 复制 `Cookie` 请求头，交互式提问收过来 |
 
 **验证码**：百科登录页有图形验证码，账号密码纯脚本走不通；QQ 登录必须人工扫码。两种都要用户参与。
 
-验证 cookie：
+已有 cookie 时验证一下：
 
 ```bash
 python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run
@@ -164,7 +164,13 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 验证码每次请求都刷新，中间不要请求添加页（脚本已用缓存规避）。
 
-**产物**：`docs/mcmod/entries.json`（模组 ID 与资料 ID 映射）
+**产物**：提交成功后从审核列表取到条目或资料 ID，记进 `docs/mcmod/entries.json`，后续再编辑要用。
+
+### 6.4 资料条目（可选）
+
+模组条目建好后，按物品、方块、生物等逐个提交资料。配置里写 `"kind": "item"`，其余流程与上面一致，验证码 id 换成 `item_add_<模组ID>`。字段与分类见 [MC百科](mcmod.md#资料条目)。
+
+颜色变体、成套装备这类，先看 [正文模板](../assets/content-templates.md) 和 [MC百科](mcmod.md#审核) 里的退回原因，别一次全提。
 
 ## 7. 核对审核
 

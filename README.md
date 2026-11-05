@@ -26,7 +26,10 @@ assets/
 scripts/
   cf/                CurseForge：请求封装、上传、建项目脚本生成
   mcmod/             百科：cookie、作者查询、条目提交
+  mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
 ```
+
+百科有两条提交路径：拿到 cookie 就用 `submit.py` 本地提交；拿不到就用 `console.py` 生成控制台脚本，在页面里跑，浏览器自带登录态和验证码。
 
 ## 表单
 

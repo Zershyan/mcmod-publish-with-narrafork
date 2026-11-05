@@ -21,10 +21,10 @@ setx CURSEFORGE_API_TOKEN "…"
 ## 请求必须用 curl_cffi
 
 ```python
-from browser_http import requests, BrowserOpener
+from cfhttp import requests, BrowserOpener
 ```
 
-`curl`、`urllib`、PowerShell 直连 `minecraft.curseforge.com/api/...` 一律返回 `<title>Just a moment...</title>`，因为 Cloudflare 按 TLS 指纹识别。`scripts/cf/http.py` 用 `curl_cffi` 的 `impersonate='chrome'` 解决。
+`curl`、`urllib`、PowerShell 直连 `minecraft.curseforge.com/api/...` 一律返回 `<title>Just a moment...</title>`，因为 Cloudflare 按 TLS 指纹识别。`scripts/cf/cfhttp.py` 用 `curl_cffi` 的 `impersonate='chrome'` 解决。
 
 首次使用：
 
