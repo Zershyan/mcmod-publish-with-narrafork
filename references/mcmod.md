@@ -260,6 +260,17 @@ python scripts/mcmod/submit.py docs/mcmod/item-test.json --captcha <字符>
 
 `category` 写中文，脚本按 [mcmod-enums.json](../assets/mcmod-enums.json) 的 `itemCategory` 转成数字。
 
+### 新建与再编辑
+
+| 场景 | `edit-id` | `redo-id` |
+|---|---|---|
+| 新建资料 | 模组 ID | `0` |
+| 修改已有资料 | 模组 ID | 资料 ID |
+
+再编辑地址是 `/item/add/<模组ID>-<资料ID>/`。资料 ID 从审核列表的「再编辑」链接里取。
+
+**带 `redo-id` 提交会替换原条目，不会新建第二条。** 实测：给已提交的 814471 发再编辑，审核列表仍然只有这一条，名称和内容被覆盖。
+
 ### 验证状态
 
 2026-11 实测成功（给 ManAbove 提交了一个「绑定热键」条目）：
