@@ -77,7 +77,7 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 ```
 
-用 `assets/form-build/` 出表单，让用户填 `mod_version` 和这次要发布的分支（可多选）。提交后**由用户自己跑 `./gradlew build`**，不要替他构建；完成后逐个分支检查 `build/libs`，只取不带 `+build.N` 的 jar 继续。
+用 `assets/forms/FormBuild.tsx` 出表单，让用户逐行填分支和 `mod_version`。提交后**由用户自己跑 `./gradlew build`**，不要替他构建；完成后逐个分支检查 `build/libs`，只取不带 `+build.N` 的 jar 继续。用户在表单里勾了「回填至项目」的话，先用 `scripts/project/version.py` 把版本号写进各分支的 `gradle.properties`，再让他构建。
 
 多分支工程**逐个分支读**，版本号规则可能不一样。
 
@@ -114,15 +114,15 @@ python scripts/cf/upload.py query curseforge
 
 ```bash
 mkdir -p .narrafork/gen_ui/publish
-cp assets/form-full/App.tsx .narrafork/gen_ui/publish/App.tsx
-cp assets/form-full/data.example.ts .narrafork/gen_ui/publish/data.ts
+cp assets/forms/FormFull.tsx .narrafork/gen_ui/publish/App.tsx
+cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 ```
 
 改 `.narrafork/gen_ui/publish/data.ts`，把第 1 步拿到的事实填进 `defaults`（作为 placeholder）和 `versions`。
 
 然后 `GenUI show .narrafork/gen_ui/publish`。
 
-表单是数据驱动的，**只改 `data.ts`，不要改 `App.tsx`**。字段说明见 [form-full](assets/form-full/README.md)。
+表单是数据驱动的，**只改 `data.ts`，不要改 `App.tsx`**（GenUI 只认这个文件名）。字段说明见 [表单模板](assets/forms/README.md)。
 
 用户提交后，把结果落成：
 
@@ -131,11 +131,11 @@ curseforge/release-manifest.json   CF 上传清单
 docs/mcmod/mod-config.json         百科提交配置
 ```
 
-已有项目只发新版本时，改用更短的 `assets/form-release/`。
+已有项目只发新版本时，改用 `assets/forms/FormRelease.tsx`。
 
 ## 第 5 步：上传到 CurseForge
 
-版本多、或第一次发布时，先用 `assets/form-confirm/` 把将要上传的内容整块给用户确认一遍。只有一个版本且用户刚在 form-release 里确认过可以跳过。
+版本多、或第一次发布时，先用 `assets/forms/FormConfirm.tsx` 把将要上传的内容整块给用户确认一遍。只有一个版本且用户刚在 FormRelease 里确认过可以跳过。
 
 ```bash
 python scripts/cf/upload.py upload curseforge/release-manifest.json \
@@ -269,6 +269,4 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 | [字段来源](references/field-sources.md) | 某个字段该从哪取 |
 | [踩坑记录](references/pitfalls.md) | 报错或行为不符预期时先查这里 |
 | [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md) | 工程装了两套 skill 时的产物、版本与资源约定 |
-| [form-full](assets/form-full/README.md) | 首次发布的完整表单怎么用 |
-| [form-release](assets/form-release/README.md) | 只发新版本的简化表单怎么用 |
-| [form-confirm](assets/form-confirm/README.md) | 提交前确认表单怎么用 |
+| [表单模板](assets/forms/README.md) | 四个 GenUI 表单各自的用途与数据格式 |

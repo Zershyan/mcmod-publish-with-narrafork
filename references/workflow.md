@@ -61,13 +61,15 @@ python scripts/cf/upload.py query curseforge
 
 | 场景 | 模板 |
 |---|---|
-| 第一次发布，要给 CF 和百科建全部信息 | `assets/form-full/` |
-| 已有项目，只发新版本 | `assets/form-release/` |
+| 装了 `zershyan-mcmod-style`，发布第一步 | `assets/forms/FormBuild.tsx` |
+| 第一次发布，要给 CF 和百科建全部信息 | `assets/forms/FormFull.tsx` |
+| 已有项目，只发新版本 | `assets/forms/FormRelease.tsx` |
+| 上传或提交前最后确认 | `assets/forms/FormConfirm.tsx` |
 
 ```bash
 mkdir -p .narrafork/gen_ui/publish
-cp assets/form-full/App.tsx .narrafork/gen_ui/publish/App.tsx
-cp assets/form-full/data.example.ts .narrafork/gen_ui/publish/data.ts
+cp assets/forms/FormFull.tsx .narrafork/gen_ui/publish/App.tsx
+cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 ```
 
 改 `data.ts`，GenUI show 该目录。**只改 data.ts，不动 App.tsx**。
@@ -97,7 +99,7 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_c
 
 ### 5.2 确认（建议）
 
-版本多或第一次发布时，用 `assets/form-confirm/` 把将要上传的内容整块给用户看一遍。
+版本多或第一次发布时，用 `assets/forms/FormConfirm.tsx` 把将要上传的内容整块给用户看一遍。
 
 ### 5.3 上传
 

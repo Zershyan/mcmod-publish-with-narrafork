@@ -18,7 +18,7 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 ```
 
-用 [form-build](../assets/form-build/README.md) 出表单，收集两样：
+用 [FormBuild](../assets/forms/README.md) 出表单，逐行收集分支与版本：
 
 | 项 | 说明 |
 |---|---|

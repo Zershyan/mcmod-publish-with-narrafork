@@ -4,9 +4,9 @@
  */
 export const DATA = {
 	projectName: "模组英文名 · 目录名",
-	currentVersion: "0.0.1",
 	branches: ["master", "1.20.1", "1.21.1"] as string[],
-	defaultBranches: ["master"] as string[],
-	/** 需要特别说明时写在这里，会显示成蓝色提示框的列表 */
+	/** 初始行；用户可以增删 */
+	rows: [{ branch: "master", version: "0.0.1" }],
+	/** 需要特别说明时写在这里，会替换默认的提示文案 */
 	hints: [] as string[],
 };

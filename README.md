@@ -20,10 +20,7 @@
 SKILL.md
 references/          流程与平台细节
 assets/
-  form-build/        装了 style skill 时，问版本号与分支
-  form-full/         首次发布的完整配置表单
-  form-release/      只发新版本的简化表单
-  form-confirm/      提交前确认
+  forms/             四个 GenUI 表单模板，用途见其 README
   mcmod-enums.json   百科提交的枚举对照
   content-templates.md  百科正文模板
 scripts/
@@ -40,11 +37,11 @@ scripts/
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>
-cp assets/form-full/App.tsx .narrafork/gen_ui/<名称>/App.tsx
-cp assets/form-full/data.example.ts .narrafork/gen_ui/<名称>/data.ts
+cp assets/forms/FormFull.tsx .narrafork/gen_ui/<名称>/App.tsx
+cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/<名称>/data.ts
 ```
 
-改 `data.ts` 后 GenUI show 该目录。详见各目录的 `README.md`。
+改 `data.ts` 后 GenUI show 该目录。四个模板的用途见 [assets/forms/README.md](assets/forms/README.md)。
 
 ## 运行依赖
 
