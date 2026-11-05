@@ -71,6 +71,14 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 
 装了的话，产物选择和版本语义要按它的约定来（最关键一条：**只发文件名不带 `+build.N` 的 jar**），完整差异见 [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md)。没装就按通用规则走。
 
+**装了 style skill 时，接着先问版本和分支**：
+
+```bash
+git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
+```
+
+用 `assets/form-build/` 出表单，让用户填 `mod_version` 和这次要发布的分支（可多选）。提交后**由用户自己跑 `./gradlew build`**，不要替他构建；完成后逐个分支检查 `build/libs`，只取不带 `+build.N` 的 jar 继续。
+
 多分支工程**逐个分支读**，版本号规则可能不一样。
 
 读完汇报一张表，缺的标出来。工程里永远拿不到的只有四类：**中文名、CF 分类、百科模组元素、百科作者名**。

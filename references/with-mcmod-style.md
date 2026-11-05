@@ -10,6 +10,23 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 
 装了才适用本文；没装就按 [字段来源](field-sources.md) 的通用规则走，不要凭这条推断。
 
+## 发布前先问版本和分支
+
+用户说要上传或发布时，**第一步不是读产物，是问清楚这次发什么**：
+
+```bash
+git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
+```
+
+用 [form-build](../assets/form-build/README.md) 出表单，收集两样：
+
+| 项 | 说明 |
+|---|---|
+| `mod_version` | 只写模组版本，不带 MC 版本和 build 编号 |
+| 要发布的分支 | 多选，每个分支单独构建、单独上传 |
+
+**构建由用户自己触发**，agent 不代跑 `./gradlew build`。用户构建完成后逐个分支检查产物。
+
 ## 产物：只发不带构建编号的 jar
 
 `versioning.md` 规定两种构建：

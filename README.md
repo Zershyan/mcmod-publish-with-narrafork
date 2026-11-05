@@ -20,8 +20,10 @@
 SKILL.md
 references/          流程与平台细节
 assets/
+  form-build/        装了 style skill 时，问版本号与分支
   form-full/         首次发布的完整配置表单
   form-release/      只发新版本的简化表单
+  form-confirm/      提交前确认
   mcmod-enums.json   百科提交的枚举对照
   content-templates.md  百科正文模板
 scripts/
