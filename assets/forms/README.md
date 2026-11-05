@@ -67,7 +67,7 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 ## 公共约定
 
-- **必须用 GenUI 生成**：没有这个工具时不能自己改成文字逐项问，先交互式问用户要不要回退成逐项询问；不同意就再确认一次 GenUI 是否可用，仍不可用则说明卡点并结束会话
+- **优先用 GenUI 生成**：没有这个工具或调用失败时不要停，改成逐项询问（有提问工具就按字段分组问，没有就用普通消息列清单）
 - **表单一律用 `render({path, wait: true})`**：它会停在表单上直到用户点提交，`genUI.submit` 的结果直接回传。`show` 只画界面、不阻塞，流程里不要用；没收到提交结果不要自己继续
 - **提交统一走 `payload`**：模板里写 `genUI.submit({ payload: JSON.stringify(数据) }, 消息)`，agent 侧 `JSON.parse(values.payload)` 还原。直接提交嵌套结构会变形——非 ASCII 的 key 会被静默丢弃，对象和数组里的对象会被转成 JSON 字符串
 - **提交字段名只用 ASCII 字母、数字、下划线**：中文键、带连字符或空格的键会被 `submit` 静默丢掉，不报错；嵌套对象会被序列化成字符串，要嵌套就在拿到后自己 `JSON.parse`

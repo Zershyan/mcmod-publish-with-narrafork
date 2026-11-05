@@ -41,7 +41,7 @@ scripts/
 
 ## 表单
 
-四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。表单**必须用 GenUI 生成**（缺工具的回退链见 SKILL.md 开局段），并且**一律用 `render` 带 `wait: true`**——它会停在表单上直到用户提交；`show` 不支持 `wait`，流程里不用。
+四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。表单**优先用 GenUI**（缺工具或调用失败时降级成逐项询问，见 SKILL.md 开局段），并且**一律用 `render` 带 `wait: true`**——它会停在表单上直到用户提交；`show` 不支持 `wait`，流程里不用。
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>
