@@ -84,6 +84,30 @@
 - 先在站内找同类型的高质量条目参考，再按其结构写。
 - 规则表、数值表同样用标题行。
 
+## 9. 绑定热键（9）
+
+- 没有注册名、耐久、堆叠，只填名称、次要名称、资料类型和正文。
+- 正文写默认键位和触发条件；按键名称与英文名从工程里的 `KeyMapping` 注册和语言文件取。
+
+```html
+<p>[ban:title_menu]</p><p>[h1=介绍]</p>
+<p><strong>中文名（English Name）</strong>是模组提供的绑定热键，默认按键为 <strong>R</strong>，可在「控制」设置中修改。</p>
+<p>[h2=作用]</p>
+<p>对另一名玩家按 R 键即可骑乘到对方身上。</p>
+```
+
+多个热键属于同一个模组时，可以合并成一条，用表格列出键位与作用：
+
+```html
+<p>[h2=热键]</p>
+<table class="table table-bordered text-nowrap"><tbody>
+<tr><th style="word-break: break-all;" align="center">键位</th><th style="word-break: break-all;" align="center">名称</th><th style="word-break: break-all;" align="center">作用</th></tr>
+<tr><td style="word-break: break-all;" align="center">R</td><td style="word-break: break-all;" align="center">骑乘</td><td style="word-break: break-all;" align="center">…</td></tr>
+</tbody></table>
+```
+
+组合键写 `Ctrl + 1` 这种形式，不要写 `Ctrl+1` 或 `CTRL-1`。
+
 ## 介绍写法
 
 - 不写只复述资料类型的句子（「是一种材料」「是一种道具」「是一种食物」）。

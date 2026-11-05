@@ -155,9 +155,12 @@ def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
         for i, author in enumerate(cfg['authors']):
             author_id = str(author.get('id') or '')
             if not author_id and author.get('name'):
-                hits = find_author(author['name'])
+                name = author['name']
+                if '<' in name or '>' in name:
+                    raise SystemExit(f'作者名还是占位符「{name}」，替换成真实作者名再试')
+                hits = find_author(name)
                 if not hits:
-                    raise SystemExit(f'找不到作者「{author["name"]}」')
+                    raise SystemExit(f'找不到作者「{name}」')
                 author_id = hits[0]['id']
                 print(f'作者 {author["name"]} -> ID {author_id}')
             if not author_id:

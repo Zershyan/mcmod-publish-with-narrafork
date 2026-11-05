@@ -100,9 +100,19 @@ powershell -NoProfile -Command "Get-Content -Raw -Encoding UTF8 'curseforge/cf_c
 }
 ```
 
+```bash
+python scripts/cf/upload.py upload curseforge/release-manifest.json \
+  --project-id <ID> --slug <slug>
+
+# 只看线上已有哪些文件
+python scripts/cf/upload.py list curseforge --project-id <ID>
+```
+
 - `displayName` 用工程 `version` 原值，**不要拼** `MC-加载器-名字-版本`
+- `displayName` 里带 `+build.N` 是正常的（那是版本号）；**禁止上传的是文件名带 `+build.N` 的 jar**，两者不是一回事
 - `artifact` 上传前校验 sha256
 - 一个 JAR 只对应一组「MC 版本 + 加载器」，多个组合要拆成多条
+- `relations.projects[].type` 常用 `requiredDependency`、`optionalDependency`、`incompatible`
 
 三层去重，命中任一层就跳过：
 

@@ -9,7 +9,7 @@
 | modid | `gradle.properties` → `mod_id` |
 | 英文名 | `gradle.properties` → `mod_name` |
 | 中文名 | **问用户**（语言文件里通常没有） |
-| 版本号 | `build.gradle` 里 `version` 的实际值 |
+| 版本号 | `build.gradle` 里 `version` 的实际值（含 MC 版本与构建尾缀） |
 | MC 版本 | `gradle.properties` → `minecraft_version` |
 | 加载器 | 有 `neo_version` → NeoForge；有 `forge_version` → Forge |
 | Java 版本 | `build.gradle` → `java.toolchain.languageVersion` |
@@ -42,11 +42,11 @@
 
 | 字段 | 取自 |
 |---|---|
-| JAR 路径 | `build/libs/<archivesName>-<version>.jar` |
+| JAR 路径 | 装 style skill：`build/libs/<archivesName>-<mod_version>-<mc>.jar`（不带构建编号）；通用：`build/libs/<archivesName>-<version>.jar` |
 | 显示名 | 工程 `version` 原值 |
 | 更新说明 | `git log` 整理，英文块 + `---` + 中文块 |
 | 发布类型 | 默认 `release`，不确定时问 |
-| 游戏版本标签 | 阶段 2 拉的 Game Versions |
+| 游戏版本标签 | 第 3 步拉的 Game Versions |
 | 运行环境 | 按注册项与 `Dist` 代码判断，判断不了问用户 |
 | 依赖 | `build.gradle` 的 `curse.maven:` 坐标 |
 
@@ -64,9 +64,9 @@
 | 支持平台 | 固定 JAVA版 |
 | 运作方式 + MC 版本 | 从 CF 的「加载器 × MC 版本」组合聚合 |
 | 客户端/服务端 | 按注册项与 `Dist` 代码判断 |
-| 官方状态 | 默认活跃 |
-| 开源状态 | 按 `mod_license` 判断 |
-| 许可证协议 | `mod_license` 映射到 SPDX 代码 |
+| 官方状态 | 按项目现状判断，多数在维护的填「活跃」；不确定时问用户 |
+| 开源状态 | 按 `mod_license` 判断，ARR 类填「闭源」 |
+| 许可证协议 | `mod_license` 映射到 SPDX 代码；找不到对应项时留空或填 `ARR` |
 | 作者 | **问名字**，脚本查 ID |
 | 相关链接 | git remote + CF 项目页 |
 | 封面 | `logo.png` 转 16:10，没有则问用户 |

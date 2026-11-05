@@ -1,6 +1,6 @@
 /**
  * 表单数据。复制本文件为同目录的 data.ts，只改这里，App.tsx 不用动。
- * 字段含义见 README.md，取值规则见 references/sources.md。
+ * 字段含义见 README.md，取值规则见 ../../references/field-sources.md。
  */
 export const DATA = {
 	/** 模组英文名，显示在标题 */
@@ -11,13 +11,13 @@ export const DATA = {
 	extraLicenses: ["GPL-3.0-with-additional-terms"],
 	/**
 	 * 从 CurseForge Game Versions API 拉到的 MC 版本列表，优先于模板内置候选。
-	 * 正常流程先跑 `upload_release.py query`，把返回的版本写进来；拿不到时才省略。
+	 * 正常流程先跑 `scripts/cf/upload.py query`，把返回的版本写进来；拿不到时才省略。
 	 */
 	mcVersions: [] as string[],
 	iconHint: "默认 logo.png（64×64）",
 	coverHint: "logo 仅 64×64，需放大加底色",
 	/** 没有资料条目时显示的说明 */
-	entriesEmptyText: "本项目是纯库模组，语言文件里没有物品、方块与实体，阶段 5 会自动跳过。",
+	entriesEmptyText: "本项目是纯库模组，语言文件里没有物品、方块与实体，百科资料条目会自动跳过。",
 
 	/** 所有字段的 placeholder，即调研值；留空的项按这些值执行 */
 	defaults: {
@@ -33,7 +33,7 @@ export const DATA = {
 		wEname: "SnowyCrescentCore",
 		wIntro: "供其他模组使用的库，提供能力注册、玩家动画与数据生成 API",
 		wModid: "sccore",
-		wCfId: "阶段 2 建完项目后填入",
+		wCfId: "建完 CF 项目后填入",
 		wMrId: "没有就留空",
 		wRelations: "代码联动的前置或附属",
 		wCore: "LIB",

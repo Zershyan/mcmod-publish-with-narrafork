@@ -222,7 +222,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 ### 6.4 资料条目（可选）
 
-模组条目建好后，按物品、方块、生物等提交资料。配置写 `"kind": "item"`，流程同上，验证码换成 `item_add_<模组ID>`。字段、分类与再编辑见 [mcmod](references/mcmod.md#资料条目)。
+模组条目建好后，按物品、方块、生物等提交资料。配置写 `"kind": "item"`，流程同上，验证码换成 `item_add_<模组ID>`。字段、分类与再编辑见 [mcmod](references/mcmod.md#资料条目)，正文按 [正文模板](assets/content-templates.md) 写。
 
 改已有资料时带 `redo-id=<资料ID>`，提交会**替换**原条目而不是新建。
 

@@ -6,7 +6,7 @@
 
 | 文档 | 内容 |
 |---|---|
-| [SKILL.md](SKILL.md) | 走哪条路、六个阶段、硬约束 |
+| [SKILL.md](SKILL.md) | 走哪条路、七步流程、硬约束 |
 | [完整流程](references/workflow.md) | 七个步骤的判定条件与产物 |
 | [CurseForge](references/curseforge.md) | 令牌、上传、依赖、状态语义 |
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、审核 |
@@ -27,13 +27,14 @@ scripts/
   cf/                CurseForge：请求封装、上传、建项目脚本生成
   mcmod/             百科：cookie、作者查询、条目提交
   mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
+  project/           工程侧：把版本号写进各分支的 gradle.properties
 ```
 
 百科有两条提交路径：拿到 cookie 就用 `submit.py` 本地提交；拿不到就用 `console.py` 生成控制台脚本，在页面里跑，浏览器自带登录态和验证码。
 
 ## 表单
 
-两个 GenUI 模板，数据驱动的：`App.tsx` 通用，项目差异只写 `data.ts`。
+四个数据驱动的 GenUI 模板，项目差异只写 `data.ts`，`App.tsx` 不动。
 
 ```bash
 mkdir -p .narrafork/gen_ui/<名称>

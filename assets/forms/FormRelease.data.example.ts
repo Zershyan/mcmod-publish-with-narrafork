@@ -1,6 +1,6 @@
 /**
  * 版本发布表单数据。复制本文件为同目录的 data.ts，按项目改这里。
- * 字段来源见 references/field-sources.md。
+ * 字段来源见 ../../references/field-sources.md。
  */
 export const DATA = {
 	project: {
