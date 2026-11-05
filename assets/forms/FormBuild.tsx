@@ -1,6 +1,6 @@
 /**
  * 构建前确认：每行一个「分支 + 版本号」，可增删。
- * 只用于装了 zershyan-mcmod-style 的工程；提交后由用户自己跑构建。
+ * 只用于装了 zershyan-mcmod-style 的工程；提交后由 agent 跑 ./gradlew build。
  * 复制本文件与 data.ts 到 .narrafork/gen_ui/<名称>/ 后 show 该目录。
  */
 import { useState } from "react";
@@ -155,8 +155,8 @@ export default function App() {
 					</ul>
 				) : (
 					<Text size="sm">
-						提交后请自己在各分支上运行 <code>./gradlew build</code>，完成后告诉我。
-						我会用 <code>build/libs</code> 里不带 build 编号的 jar 继续。
+						提交后会在各分支自动运行 <code>./gradlew build</code>（不跑 buildAlpha），
+						然后用 <code>build/libs</code> 里不带 build 编号的 jar 继续发布。
 					</Text>
 				)}
 			</Alert>

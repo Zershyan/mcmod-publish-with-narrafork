@@ -77,7 +77,11 @@ ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 ```
 
-用 `assets/forms/FormBuild.tsx` 出表单，让用户逐行填分支和 `mod_version`。提交后**由用户自己跑 `./gradlew build`**，不要替他构建；完成后逐个分支检查 `build/libs`，只取不带 `+build.N` 的 jar 继续。用户在表单里勾了「回填至项目」的话，先用 `scripts/project/version.py` 把版本号写进各分支的 `gradle.properties`，再让他构建。
+用 `assets/forms/FormBuild.tsx` 出表单，让用户逐行填分支和 `mod_version`。用户在表单里勾了「回填至项目」的话，先用 `scripts/project/version.py` 把版本号写进各分支的 `gradle.properties`。
+
+然后**自己在各分支跑 `./gradlew build`**，用产出的正式包继续。
+
+**只能跑 `build`，绝不能跑 `buildAlpha`**：前者沿用已记录的编号、不改工程状态；后者会递增 `mod_build_number` 并回写 `gradle.properties`，那是开发动作。构建失败时如实报告并停下来，不要改用 `buildAlpha` 绕过。
 
 多分支工程**逐个分支读**，版本号规则可能不一样。
 

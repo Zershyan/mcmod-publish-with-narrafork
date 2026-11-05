@@ -25,7 +25,16 @@ git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 | `mod_version` | 只写模组版本，不带 MC 版本和 build 编号 |
 | 要发布的分支 | 多选，每个分支单独构建、单独上传 |
 
-**构建由用户自己触发**，agent 不代跑 `./gradlew build`。用户构建完成后逐个分支检查产物。
+**构建由 agent 触发**，但要分清两个任务的差别：
+
+| 任务 | 能否由 agent 跑 | 原因 |
+|---|---|---|
+| `./gradlew build` | ✅ 可以，默认这么做 | 沿用已记录编号，不改 `gradle.properties` |
+| `./gradlew buildAlpha` | ❌ **禁止** | 递增 `mod_build_number` 并回写属性，属开发动作 |
+
+发布流程里只跑 `build`。构建失败就如实报告并停下，不要改用 `buildAlpha` 换个路子绕过。
+
+勾了「回填至项目」时，构建前先执行 `python scripts/project/version.py <branch>=<version> ...`。
 
 ## 产物：只发不带构建编号的 jar
 
