@@ -143,19 +143,63 @@ type FormData = {
 const D = DATA as FormData;
 
 /** CurseForge 分类及中文对照 */
+/**
+ * CurseForge 的 Main category（Class=Mods）。
+ * 2026-11 从建项目页 Choose Game → General 的 MUI 下拉里实读，共 51 项；
+ * 页面改版后按同样方式重抓，不要凭记忆补。
+ */
 const CF_CATEGORIES: { value: string; zh: string }[] = [
 	{ value: "Adventure and RPG", zh: "冒险与角色扮演" },
 	{ value: "API and Library", zh: "API 与前置" },
 	{ value: "Armor, Tools, and Weapons", zh: "装备与武器" },
+	{ value: "Automation", zh: "自动化" },
+	{ value: "Biomes", zh: "生物群系" },
+	{ value: "Bug Fixes", zh: "问题修复" },
 	{ value: "Cosmetic", zh: "外观装饰" },
-	{ value: "Decoration", zh: "装饰" },
+	{ value: "Create", zh: "Create 附属" },
+	{ value: "CreativeMode", zh: "创造模式" },
+	{ value: "Dimensions", zh: "维度" },
+	{ value: "Education", zh: "教育" },
+	{ value: "Energy", zh: "能源" },
+	{ value: "Energy, Fluid, and Item Transport", zh: "能源/流体/物品运输" },
+	{ value: "Farming", zh: "农业" },
+	{ value: "Food", zh: "食物" },
+	{ value: "Genetics", zh: "基因" },
+	{ value: "Horror", zh: "恐怖" },
+	{ value: "KubeJS", zh: "KubeJS 附属" },
+	{ value: "Magic", zh: "魔法" },
 	{ value: "Map and Information", zh: "地图与信息" },
-	{ value: "Mobs", zh: "生物" },
+	{ value: "MCreator", zh: "MCreator" },
 	{ value: "Miscellaneous", zh: "杂项" },
+	{ value: "Mobs", zh: "生物" },
+	{ value: "Ores and Resources", zh: "矿物与资源" },
+	{ value: "Performance", zh: "性能优化" },
+	{ value: "Player Transport", zh: "玩家运输" },
+	{ value: "Processing", zh: "加工处理" },
+	{ value: "Redstone", zh: "红石" },
 	{ value: "Server Utility", zh: "服务器实用" },
+	{ value: "Storage", zh: "存储" },
+	{ value: "Structures", zh: "结构" },
 	{ value: "Technology", zh: "科技" },
+	{ value: "Twitch Integration", zh: "Twitch 集成" },
+	{ value: "Utility & QoL", zh: "实用与便利" },
 	{ value: "World Gen", zh: "世界生成" },
 	{ value: "Addons", zh: "附属" },
+	{ value: "Applied Energistics 2", zh: "AE2 附属" },
+	{ value: "Blood Magic", zh: "血魔法附属" },
+	{ value: "Buildcraft", zh: "Buildcraft 附属" },
+	{ value: "CraftTweaker", zh: "CraftTweaker 附属" },
+	{ value: "Farmer's Delight", zh: "农夫乐事附属" },
+	{ value: "Forestry", zh: "林业附属" },
+	{ value: "Galacticraft", zh: "星系附属" },
+	{ value: "Industrial Craft", zh: "工业附属" },
+	{ value: "Integrated Dynamics", zh: "集成动力附属" },
+	{ value: "Refined Storage", zh: "精致存储附属" },
+	{ value: "Skyblock", zh: "空岛" },
+	{ value: "Thaumcraft", zh: "神秘时代附属" },
+	{ value: "Thermal Expansion", zh: "热力膨胀附属" },
+	{ value: "Tinker's Construct", zh: "匠魂附属" },
+	{ value: "Twilight Forest", zh: "暮色森林附属" },
 ];
 const CF_VALUES = CF_CATEGORIES.map((item) => item.value);
 const CF_ZH: Record<string, string> = Object.fromEntries(
@@ -822,7 +866,7 @@ export default function App() {
 													<Grid.Col span={12}>
 														<Textarea
 															label="更新说明"
-															description="留空则按 git 提交记录整理，英文块 + --- + 中文块"
+															description="必须中英双语：英文块 + --- + 中文块；留空则由 agent 按 git 记录整理成双语"
 															placeholder="可选"
 															minRows={2}
 															autosize
@@ -855,16 +899,17 @@ export default function App() {
 								<Grid gutter="sm">
 									<Grid.Col span={4}>
 										<TextInput
-											label="主要名称（中文）"
+											label="主要名称"
 											withAsterisk
+											description="有汉化填中文名，否则填其他语言名；译名须来自官方或社区汉化"
 											placeholder={D.defaults.wName}
 											{...text("wName")}
 										/>
 									</Grid.Col>
 									<Grid.Col span={4}>
 										<TextInput
-											label="次要名称（英文）"
-											description="主要名称是中文时才填，否则留空"
+											label="次要名称"
+											description="主要名称是中文时才填原名，否则留空"
 											placeholder={D.defaults.wEname}
 											{...text("wEname")}
 										/>
@@ -872,7 +917,8 @@ export default function App() {
 									<Grid.Col span={4}>
 										<TextInput
 											label="简写名称"
-											placeholder="GT6、TiC2 这类社区通用缩写"
+											description="社区通用缩写，如 GT6、TiC2；没有就留空"
+											placeholder={D.defaults.wSname || undefined}
 											{...text("wSname")}
 										/>
 									</Grid.Col>

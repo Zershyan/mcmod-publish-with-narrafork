@@ -9,11 +9,17 @@ import argparse
 import base64
 import io
 import json
+import re
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'create_project_template.js'
+
+
+def is_bilingual(text: str) -> bool:
+    """CurseForge 要求项目描述同时给英文和中文。"""
+    return bool(re.search(r'[\u4e00-\u9fff]', text)) and bool(re.search(r'[A-Za-z]{3,}', text))
 
 
 def load_icon(path: Path) -> str:
@@ -45,10 +51,20 @@ def main():
     config = json.loads(config_path.read_text(encoding='utf-8'))
     resolve = lambda p: Path(p) if Path(p).is_absolute() else base / p
 
-    description = resolve(config['description']).read_text(encoding='utf-8')
+    description_path = resolve(config['description'])
+    if not description_path.exists():
+        raise SystemExit(f'描述文件不存在：{description_path}')
+    description = description_path.read_text(encoding='utf-8')
+    if not is_bilingual(description):
+        raise SystemExit('项目描述必须中英双语：英文块 + 空行 + --- + 空行 + 中文块')
     icon = ''
     if config.get('icon') and not args.no_icon:
-        icon = load_icon(resolve(config['icon']))
+        icon_path = resolve(config['icon'])
+        if not icon_path.exists():
+            raise SystemExit(
+                f'图标不存在：{icon_path}。没有图标就加 --no-icon，'
+                f'或先跑 scripts/project/make_icon.py 生成一张')
+        icon = load_icon(icon_path)
 
     data = {
         'name': config['name'],
@@ -73,6 +89,7 @@ def main():
     output = Path(args.output) if args.output else base / 'cf_create_project_fill.js'
     output.write_text(script, encoding='utf-8', newline='\n')
     print(f'已生成 {output}（{len(script) // 1024} KB），node --check 后再投入浏览器')
+    print('建完后马上把 projectId / slug 写进 curseforge/project.json，否则下次会当成「待建」再走一遍')
 
 
 if __name__ == '__main__':

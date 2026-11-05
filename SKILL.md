@@ -47,7 +47,7 @@ cp assets/forms/FormBuild.data.example.ts .narrafork/gen_ui/build/data.ts
 
 拿到提交结果（`JSON.parse(values.payload)`）后再动手：
 
-- 勾了「回填至项目」→ `python scripts/project/version.py main=0.0.1 1.20.1=0.0.1 --commit`。**多分支必须加 `--commit`**：git 不允许带着未提交的 `gradle.properties` 切分支，不提交就只有第一个分支改得动
+- 勾了「回填至项目」→ `python scripts/project/version.py main=0.0.1 1.20.1=0.0.1 --commit`。**多分支必须加 `--commit`**：git 不允许带着未提交的 `gradle.properties` 切分支，不提交就只有第一个分支改得动。版本已经是目标值的分支会自动跳过，不产生空提交
 - **自己跑 `./gradlew build`**，绝不跑 `buildAlpha`（后者递增编号并回写属性，属开发动作）
 - 构建失败就如实报告停下，不要改用 `buildAlpha` 绕过
 
@@ -102,12 +102,20 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
 
 1. 出表单前先读 skill 的 `.narrafork/icon-style.json`，有内容就填进 `data.ts` 的 `iconStyle`
 2. 用户在图标那行点「编辑样式」打开面板：左侧实时预览，右侧两行文本、两行排版开关、字体（Segoe UI / Arial / Calibri / Impact / Bahnschrift / Georgia / Consolas）、字号、行距、字距、对齐、全部大写、边框、导出尺寸、文字色与背景色
-3. 用户点「保存为默认」会发来一条 `保存图标样式：{…}`，把里面的 JSON 写回 `.narrafork/icon-style.json`，下次发布其他模组直接复用
+3. 用户点「保存为默认」会发来一条 `保存图标样式：{…}`，直接喂给脚本存档，不要手写文件：
+
+```bash
+python scripts/project/save_icon_style.py '<表单发来的整段文本>'
+```
+
+存进 skill 的 `.narrafork/icon-style.json`，下次发布其他模组直接复用；`--reset` 回到默认。
 4. 提交结果里带 `cfAutoIcon` 与 `cfIconStyle`，勾着且工程确实没有图标时生成 PNG：
 
 ```bash
 python scripts/project/make_icon.py <模组英文名> --out src/main/resources/logo.png
 ```
+
+目标已存在时会拒绝覆盖（工程本来就有图标就不该跑这个脚本）；确认要用占位图替换才加 `--force`。
 
 样式文件会被自动读取；要临时覆盖就加 `--font georgiab.ttf --font-size 56 --fg "#3b1f0e"` 这类参数，加 `--save-style` 则一并写回配置。多行用 `--lines "Forge|Attachment"`。
 
@@ -123,6 +131,8 @@ python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \
 ```
 
 它按工程实际情况挑包、算 sha256、拼 `displayName`（= jar 文件名去掉 `.jar`）与 `gameVersions`。**不要手写 manifest**。
+
+每个 `changelog` 必须中英双语（英文块 + `---` + 中文块），脚本会校验，只有单语直接报错。项目描述同理，`create_project.py` 也会拦。
 
 ## 第 5 步：确认，然后建项目、上传
 
@@ -140,7 +150,9 @@ cp assets/forms/FormConfirm.data.example.ts .narrafork/gen_ui/confirm/data.ts
 
 **① 建项目**（仅当 `project.json` 不存在）
 
-按 [建项目](references/curseforge.md#项目创建) 走，拿到 `projectId` / `slug`。脚本会顺手勾上 Project Pages，向导里没这一项就在报告里提示。
+按 [建项目](references/curseforge.md#项目创建) 走。**全程用 MCP 执行脚本，不要手填**，跑完看 `report` 和 `projectId` 核验一次即可。
+
+脚本会顺手勾上 Project Pages，向导里没这一项就在报告里提示。
 
 **② 补项目链接**（向导里没有 Source / Issues / Wiki）
 
@@ -163,7 +175,11 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 **返回文件 ID 只代表受理，不是过审。**汇报时说「已受理」，不要承诺审核耗时。
 
-## 第 6 步：MC百科（用户要发才做）
+## 第 6 步：MC百科（表单里 `wiki` 为 true 才做）
+
+看第 4 步表单结果的 `payload.wiki`：`true` 就走这段，`false` 直接跳到第 7 步。
+
+**不要再问一遍要不要发百科**——那个开关就是用户的选择，和第 2 步问「有没有现成 CF 项目」是两回事，不要在同一轮一起问。
 
 ### 6.1 选提交通道
 

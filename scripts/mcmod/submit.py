@@ -328,6 +328,8 @@ def main():
     print('\n返回：', json.dumps(result, ensure_ascii=False))
     if result.get('state') == 0:
         print('提交成功：', result.get('url', '(无地址)'))
+        print('记下条目 ID 并写进 docs/mcmod/entries.json；同一配置再跑一次会新建第二条，'
+              '改已有条目要带 redo-id')
     elif result.get('state') == 117 and 'captcha' not in payload:
         raise SystemExit('state=117 且没有带验证码，可能是缺验证码；先跑 --captcha-url 取图')
     else:

@@ -32,8 +32,8 @@
 | 详细描述 | 按 README 与源码整理 |
 | 图标 | `src/main/resources/logo.png`；没有时按表单勾选项用 `make_icon.py` 生成占位图（样式读 skill 的 `.narrafork/icon-style.json`，可在表单弹窗里调），没勾就问用户 |
 | Class | 固定 `Mods` |
-| 主分类 | **问用户** |
-| 附加分类 | **问用户** |
+| 主分类 | **问用户**；候选取 `FormFull` 的 `CF_CATEGORIES`（建项目页实读的 51 项），不要自己造名字 |
+| 附加分类 | **问用户**，候选同上 |
 | 许可证 | `mod_license` |
 | 允许第三方分发 | 闭源关、开源开，可覆盖 |
 | 允许评论 | `true` |

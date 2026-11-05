@@ -6,6 +6,7 @@
 
 单分支只改文件不提交。多分支必须加 --commit：git 不允许带着未提交的
 gradle.properties 切分支，只有逐分支提交才能走下去。
+版本已经是目标值的分支会跳过，不产生空提交，也不会中断后面的分支。
 gradle.properties 自身必须干净，其他文件的改动用 --allow-dirty 放行。
 """
 import argparse
@@ -59,6 +60,7 @@ def main():
 
     original = current_branch()
     changed = []
+    skipped = []
     try:
         for branch, version in pairs:
             print(f'切到 {branch}')
@@ -69,6 +71,11 @@ def main():
             updated, count = re.subn(r'(?m)^mod_version=.*$', f'mod_version={version}', text)
             if count != 1:
                 raise SystemExit(f'{branch} 的 gradle.properties 里没有唯一的 mod_version 行')
+            if updated == text:
+                # 内容没变就别写、更别提交：空提交会让 git 报错并中断后面的分支
+                print(f'  已经是 {version}，跳过')
+                skipped.append(branch)
+                continue
             PROPERTIES.write_text(updated, encoding='utf-8')
             changed.append((branch, version))
             print(f'  mod_version={version}')
@@ -81,10 +88,12 @@ def main():
             print(f'回到 {original}')
             git('checkout', original, check=False)
 
-    if args.commit:
-        print(f'已回填并提交 {len(changed)} 个分支')
-    else:
-        print(f'已回填 {len(changed)} 个分支，改动未提交，确认后自行 commit')
+    summary = []
+    if changed:
+        summary.append(f'回填 {len(changed)} 个分支' + ('并提交' if args.commit else '（未提交，确认后自行 commit）'))
+    if skipped:
+        summary.append(f'跳过 {len(skipped)} 个（版本已是目标值：{"、".join(skipped)}）')
+    print('，'.join(summary) or '没有需要改动的分支')
 
 
 if __name__ == '__main__':

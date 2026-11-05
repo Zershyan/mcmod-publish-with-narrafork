@@ -225,7 +225,7 @@ export default function App() {
 									<Grid.Col span={12}>
 										<Textarea
 											label="更新说明"
-											description="留空则按 git 提交记录整理，英文块 + --- + 中文块"
+											description="必须中英双语：英文块 + --- + 中文块；留空则由 agent 按 git 记录整理成双语"
 											placeholder="可选"
 											minRows={2}
 											autosize

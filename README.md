@@ -36,7 +36,7 @@ scripts/
   cf/                CurseForge：请求封装、上传、清单生成、建项目、补链接
   mcmod/             百科：cookie、作者查询、条目提交
   mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
-  project/           工程侧：版本号回填、占位图标生成（样式存 .narrafork/icon-style.json）
+  project/           工程侧：版本号回填、占位图标生成与样式存档（.narrafork/icon-style.json）
 ```
 
 百科的提交通道按环境能力降级：有 browsermcp 就在页面里跑控制台脚本（不需要 cookie），有 `Browser` 工具就 dump cookie 走 `submit.py`，都没有就把脚本给用户手动粘贴。细节见 SKILL.md 第 6 步。

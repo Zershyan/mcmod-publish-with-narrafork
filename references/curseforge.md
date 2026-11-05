@@ -64,14 +64,16 @@ python scripts/cf/upload.py query curseforge
 - Java 版本在 `2`（`Java 8` ~ `Java 25`）
 - 环境在 `75208`（`Client` / `Server`）
 
-`gameVersions` 里要同时给：MC 版本、加载器、Java 版本、Client/Server。接口**只要整数 ID**，传名称会 400：`Expected Integer but got String. Path 'gameVersions[0]'`。
+`gameVersions` 要同时给四类：MC 版本、加载器、Java 版本、Client/Server。
 
-manifest 里照抄 `game-versions.json` 的 `name` 就行，`upload.py` 发请求前自己换成 ID（同名条目按版本组挑，挑不出来会报错并列候选）：
+**manifest 里写名称**，照抄 `game-versions.json` 的 `name` 就行——`upload.py` 发请求前自己换成整数 ID：
 
 ```
 ["1.20.1", "Forge", "Java 17", "Client", "Server"]
 → [9990, 7498, 8326, 9638, 9639]
 ```
+
+**别手写 ID**。接口只认整数（传名称会 400：`Expected Integer but got String. Path 'gameVersions[0]'`），同名条目按版本组挑，挑不出来脚本会报错并列候选。
 
 要手工核对某条时，按名称查它落在哪个版本组：
 
@@ -97,7 +99,7 @@ python scripts/cf/create_project.py curseforge/cf_create_project.json
 node --check curseforge/cf_create_project_fill.js
 ```
 
-**默认用 browsermcp 跑**，它连的是用户自己已登录的 Chrome，登录态现成：
+**默认用 browsermcp 跑，全程脚本执行，不要手填**——手填既慢又容易和脚本状态打架。MCP 连的是用户已登录的 Chrome，登录态现成：
 
 ```
 goto https://authors.curseforge.com/#/projects/create
@@ -105,7 +107,16 @@ eval <curseforge/cf_create_project_fill.js 的全部内容>
 console
 ```
 
-脚本自己过 Choose Game、填 General / Description / License，最后点创建并打印 `projectId`。执行前确认：**界面切英文、关闭浏览器翻译**，否则字段匹配不到。中途停在某一步时，处理完页面提示**再执行一次**，会从当前步骤接着走。
+脚本自己过 Choose Game、填 General / Description / License，最后点创建，并打印每个字段的 `report` 与 `projectId` / `slug`。
+
+**跑完核验一次就够**：
+
+- `console` 里 `report` 有没有标「未找到，需手动」或「点击后仍未勾选」的项
+- `projectId` 打出来了没有、URL 有没有跳到 `/projects/<ID>/files`
+
+两项都过就继续下一步；有异常才处理——补一次脚本，或按报告里指出的字段手动补。**不要从头手填整张表。**
+
+执行前确认：**界面切英文、关闭浏览器翻译**，否则字段匹配不到。中途停在某一步时，处理完页面提示**再执行一次**，会从当前步骤接着走。
 
 **没有 browsermcp** 时回落到人工粘贴：
 
@@ -161,6 +172,19 @@ python scripts/cf/set_links.py --source https://github.com/<user>/<repo>
 产物是 `curseforge/cf_set_links.js`，在项目设置页 `eval` 执行，`console` 看每项是否填上，最后手动点保存。字段靠文案匹配（source / issue / wiki），页面改版时会提示「没找到输入框」。
 
 失败时跑 `scripts/cf/dom_probe.js` 抓页面结构，按实际结构改模板。
+
+### 分类只能从页面读
+
+CF 没有可用的分类 API：`api.curseforge.com` 那套要 `x-api-key`（`console.curseforge.com` 申请），上传令牌调它返回 403。**建项目页里下拉出来的选项才是唯一准的**。
+
+2026-11 实读结果：
+
+- **Class**（9 项）：Bukkit Plugins、Modpacks、Customization、Addons、Shaders、**Mods**、Resource Packs、Data Packs、Worlds。模组固定选 `Mods`
+- **Main category**（Class=Mods 时 **51 项**）：完整列表在 `assets/forms/FormFull.tsx` 的 `CF_CATEGORIES`
+
+页面改版后重抓：打开建项目页 → 选 Minecraft 进 General → 对 Class / Main category 的 `[role=combobox]` 派发 **`mousedown`**（MUI Select 只认 mousedown，`click()` 不展开）→ 读 `[role=option]` 的文本。
+
+以前表单里写过 `Decoration` 这种页面根本没有的分类，agent 照着填，提交时才被拒——**别凭记忆补名字**。
 
 ## 上传
 
@@ -239,7 +263,10 @@ GET https://www.curseforge.com/api/v1/mods/{projectId}/files?pageIndex=0&pageSiz
 
 ## 描述与更新说明
 
+项目描述和每个版本的更新日志都**必须同时有英文和中文**，只有一边的内容脚本会直接拒绝：
+
 - 英文块在上、`---`、中文块在下，不交替
+- `create_project.py` 校验描述文件，`make_manifest.py` 校验每个 `changelog`，单语直接报错
 - MC 版本、加载器、Java 放版本标签，不重复塞进描述
 - 衍生作品两个语言块开头各写一次原作名、作者、链接、「非官方」声明
 - 衍生作品加 `## Credits` / `## 鸣谢`，只写感谢与来源，不写暗示原作者背书的措辞

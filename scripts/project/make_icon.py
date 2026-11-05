@@ -194,6 +194,8 @@ def main():
     parser.add_argument('--fg')
     parser.add_argument('--bg')
     parser.add_argument('--canvas', type=int)
+    parser.add_argument('--force', action='store_true',
+                        help='目标已存在时也覆盖；工程本来就有图标时不要加')
     args = parser.parse_args()
 
     style = load_style(Path(args.style) if args.style else None)
@@ -220,7 +222,13 @@ def main():
         STYLE_FILE.write_text(json.dumps(style, ensure_ascii=False, indent=2), encoding='utf-8')
         print(f'样式已保存：{STYLE_FILE}')
 
-    path = make(args.name, Path(args.out), style)
+    out = Path(args.out)
+    if out.exists() and not args.force:
+        raise SystemExit(
+            f'{out} 已存在。工程已有图标就不要再跑这个脚本；'
+            f'确认要用占位图覆盖它，加 --force')
+
+    path = make(args.name, out, style)
     lines = resolve_lines(style, args.name)
     print(f'已生成图标：{path}（{style["canvas"]}×{style["canvas"]}，{style["font"]}，'
           f'{len(lines)} 行：{" / ".join(lines)}）')

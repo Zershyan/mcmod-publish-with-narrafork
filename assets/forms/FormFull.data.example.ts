@@ -1,6 +1,9 @@
 /**
  * 表单数据。复制本文件为同目录的 data.ts，只改这里，App.tsx 不用动。
  * 字段含义见 README.md，取值规则见 ../../references/field-sources.md。
+ *
+ * 要外置长文本（比如整段 cfDescription）就写成常量放在 DATA 之前——
+ * 放后面再被 DATA 引用会触发 TDZ：Cannot access '…' before initialization
  */
 export const DATA = {
 	/** 模组英文名，显示在标题 */

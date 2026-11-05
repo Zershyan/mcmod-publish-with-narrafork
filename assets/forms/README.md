@@ -59,7 +59,7 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 预览用 DOM + CSS 排版（flex 垂直居中、`lineHeight` 控行距、`letterSpacing` 控字距），和最终 PNG 的排版参数一一对应。
 
-提交结果里是 `cfAutoIcon` 与 `cfIconStyle`；点「保存为默认」会把样式以消息发给 agent，存进 skill 的 `.narrafork/icon-style.json`，下次换模组直接复用。生成用 `scripts/project/make_icon.py`。
+提交结果里是 `cfAutoIcon` 与 `cfIconStyle`；点「保存为默认」会把样式以消息发给 agent，agent 用 `scripts/project/save_icon_style.py` 存进 skill 的 `.narrafork/icon-style.json`，下次换模组直接复用。生成用 `scripts/project/make_icon.py`。
 
 `versions[].modVersion` 填 `gradle.properties` 里的 `mod_version`（如 `0.0.1`），**不要填 Gradle `version`**，也不带 MC 版本与 `+build.N`。发布时的显示名由 `make_manifest.py` 按 jar 文件名生成。
 
@@ -78,7 +78,8 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 ## 公共约定
 
 - **优先用 GenUI 生成**：没有这个工具或调用失败时不要停，改成逐项询问（有提问工具就按字段分组问，没有就用普通消息列清单）
-- **表单一律用 `render({path, wait: true})`**：它会停在表单上直到用户点提交，`genUI.submit` 的结果直接回传。`show` 只画界面、不阻塞，流程里不要用；没收到提交结果不要自己继续
+- **外置的常量写在 `DATA` 之前**：`const DESCRIPTION = "…"` 放在 `export const DATA` 后面、又被 `DATA` 引用，会触发 TDZ 错误（`Cannot access 'DESCRIPTION' before initialization`），表单直接白屏
+- **必须用 `render` 带 `wait`**：它会停在表单上直到用户点提交，`genUI.submit` 的结果直接回传。`show` 只画界面、不阻塞，流程里不要用；没收到提交结果不要自己继续
 - **提交统一走 `payload`**：模板里写 `genUI.submit({ payload: JSON.stringify(数据) }, 消息)`，agent 侧 `JSON.parse(values.payload)` 还原。直接提交嵌套结构会变形——非 ASCII 的 key 会被静默丢弃，对象和数组里的对象会被转成 JSON 字符串
 - **提交字段名只用 ASCII 字母、数字、下划线**：中文键、带连字符或空格的键会被 `submit` 静默丢掉，不报错；嵌套对象会被序列化成字符串，要嵌套就在拿到后自己 `JSON.parse`
 - 所有调研值放 **placeholder**（灰色提示），用户留空就按提示值执行

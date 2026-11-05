@@ -49,6 +49,17 @@ def check_version(version: str) -> None:
             f'不带 MC 版本和 +build.N')
 
 
+def is_bilingual(text: str) -> bool:
+    """CurseForge 要求描述与更新日志都同时给英文和中文。"""
+    return bool(re.search(r'[\u4e00-\u9fff]', text)) and bool(re.search(r'[A-Za-z]{3,}', text))
+
+
+def check_changelog(version: str, changelog: str) -> None:
+    if changelog and not is_bilingual(changelog):
+        raise SystemExit(
+            f'{version} 的更新日志必须中英双语：英文块 + 空行 + --- + 空行 + 中文块')
+
+
 def collect_relations(dependencies: list) -> dict:
     projects = []
     for dep in dependencies or []:
@@ -89,6 +100,8 @@ def build_files(versions: list, dependencies: list) -> tuple[list, list]:
 
     for version in versions:
         check_version(version['modVersion'])
+        changelog = version.get('changelog') or ''
+        check_changelog(version['modVersion'], changelog)
         for minecraft in version.get('mcVersions') or []:
             for loader in version.get('loaders') or []:
                 artifact = resolve_artifact(prefix, version['modVersion'], minecraft, style)
@@ -102,7 +115,7 @@ def build_files(versions: list, dependencies: list) -> tuple[list, list]:
                     'artifact': str(artifact).replace('\\', '/'),
                     'sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
                     'metadata': {
-                        'changelog': version.get('changelog') or '',
+                        'changelog': changelog,
                         'changelogType': 'markdown',
                         'displayName': artifact.stem,
                         'releaseType': version.get('releaseType') or 'release',
