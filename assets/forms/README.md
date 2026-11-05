@@ -49,6 +49,8 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 **只跑 `build`，不跑 `buildAlpha`**：前者沿用已记录编号、不改工程状态；后者会递增 `mod_build_number` 并回写 `gradle.properties`，属于开发动作。构建失败如实报告，不要改用 `buildAlpha` 绕过。
 
+产出的 jar **禁止使用文件名带 `+build.N` 的**，那类属于测试构建。
+
 ### FormFull.data.example.ts
 
 见文件内注释。核心是 `defaults`（各字段的 placeholder，即调研值）和 `versions` / `authors` / `entries` / `dependencies`。

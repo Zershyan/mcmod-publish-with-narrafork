@@ -69,7 +69,12 @@ ls src/main/resources/logo.png
 ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
 ```
 
-装了的话，产物选择和版本语义要按它的约定来（最关键一条：**只发文件名不带 `+build.N` 的 jar**），完整差异见 [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md)。没装就按通用规则走。
+装了、且 `build.gradle` 符合它的规范（有 `buildAlpha` 任务、`version` 由 `<mod_version>-<mc>+build.<N>` 拼成、有 `finalizeArtifacts`）时：
+
+- **禁止上传任何文件名带 `+build.N` 的 jar**，没有例外
+- 某个分支只有带编号的包 → 那个分支还没跑正式构建，停下来报告
+
+完整差异见 [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md)。没装就按通用规则走。
 
 **装了 style skill 时，接着先问版本和分支**：
 

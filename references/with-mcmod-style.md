@@ -36,20 +36,22 @@ git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 
 勾了「回填至项目」时，构建前先执行 `python scripts/project/version.py <branch>=<version> ...`。
 
-## 产物：只发不带构建编号的 jar
+## 产物：禁止使用带构建编号的 jar
 
 `versioning.md` 规定两种构建：
 
 | 构建 | 最终 jar 名 | 性质 |
 |---|---|---|
-| `build` | `examplemod-0.0.1-1.21.1.jar` | 正式包 |
-| `buildAlpha` | `examplemod-0.0.1-1.21.1+build.5.jar` | 带编号的测试构建 |
+| `build` | `examplemod-0.0.1-1.21.1.jar` | 正式包，**只有这种能上传** |
+| `buildAlpha` | `examplemod-0.0.1-1.21.1+build.5.jar` | 带编号的测试构建，**禁止上传** |
 
-**发布只用文件名不带 `+build.N` 的那个。**
+**任何文件名带 `+build.N` 的 jar 一律不允许上传**，没有例外。
 
-- 两种都在：选不带编号的
-- 只剩带编号的：说明还没跑过普通 `build`，先构建，**不要拿 alpha 包顶替**
-- `build/libs/obfuscate/`、`build/libs/origin/` 是中间产物，都不发
+- 挑包时直接跳过带编号的
+- 某个分支只有带编号的包 → 那个分支还没跑过正式构建，停下来报告，等构建完成再来
+- `build/libs/obfuscate/`、`build/libs/origin/` 是中间产物，同样不碰
+
+如何确认工程符合这套规范：`build.gradle` 里有 `buildAlpha` 任务、`version` 由 `<mod_version>-<minecraft_version>+build.<N>` 拼成、有 `finalizeArtifacts`。三者对上才适用本节。
 
 包内版本两种都带编号，所以「文件名不带编号」不影响 CF 上的显示名。
 

@@ -18,7 +18,7 @@
 | 简介 | `gradle.properties` → `mod_description` |
 | JAR 名 | `base { archivesName }`，没配时用工程目录名 |
 
-装了 `zershyan-mcmod-style` 的工程，发布只用文件名不带 `+build.N` 的 jar，细节见 [与 zershyan-mcmod-style 同装时](with-mcmod-style.md)。没装的按 `build.gradle` 实际命名判断。
+装了 `zershyan-mcmod-style` 的工程，**禁止使用文件名带 `+build.N` 的 jar**，细节见 [与 zershyan-mcmod-style 同装时](with-mcmod-style.md)。没装的按 `build.gradle` 实际命名判断。
 
 **版本号不要拼**。有的工程是 `${mod_version}-${minecraft_version}+build.${n}`，有的直接 `version = mod_version`，多分支工程甚至每个分支都不一样。逐个分支读 `build.gradle`。
 
