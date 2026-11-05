@@ -120,9 +120,45 @@ def secondary_name(name: str, ename: str) -> str:
     return ename if has_chinese(name) else ''
 
 
+def clean_sname(name: str, ename: str, sname: str) -> str:
+    """简写只能是社区通用缩写：字母数字符号，且不能与主/次名称重复。"""
+    if not sname:
+        return ''
+    if not re.fullmatch(r'[A-Za-z0-9 ._+#&-]+', sname):
+        print(f'简写名称「{sname}」含字母数字符号以外的字符，已跳过（百科只收 enstring）')
+        return ''
+    if sname in (name, ename):
+        print(f'简写名称「{sname}」与主/次名称相同，已跳过')
+        return ''
+    if len(sname) > 16:
+        print(f'简写名称「{sname}」有 {len(sname)} 个字符，不像缩写，已跳过')
+        return ''
+    return sname
+
+
 def join_field(value) -> str:
     """标签与关键词在页面上是逗号分隔的文本框，不是多值对象。"""
     return value if isinstance(value, str) else ','.join(str(item) for item in value)
+
+
+def clean_keys(value, limit: int = 10, max_width: int = 24) -> str:
+    """搜索关键词只该放别名、外号、分词——百科明文禁止滥用。"""
+    if not value:
+        return ''
+    items = value if isinstance(value, list) else str(value).split(',')
+    kept = []
+    for item in items:
+        item = str(item).strip()
+        if not item:
+            continue
+        width = sum(2 if ord(ch) > 127 else 1 for ch in item)
+        if width > max_width:
+            print(f'关键词「{item}」太长了，不像别名，已跳过')
+            continue
+        kept.append(item)
+    if len(kept) > limit:
+        print(f'关键词有 {len(kept)} 条，只保留前 {limit} 条')
+    return ','.join(kept[:limit])
 
 
 def cover_data_url(path: Path, width: int = 480, height: int = 300) -> str:
@@ -151,10 +187,11 @@ def cover_data_url(path: Path, width: int = 480, height: int = 300) -> str:
 
 
 def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
+    ename = secondary_name(cfg['name'], cfg.get('ename', ''))
     data = {
         'name': cfg['name'],
-        'ename': secondary_name(cfg['name'], cfg.get('ename', '')),
-        'sname': cfg.get('sname', ''),
+        'ename': ename,
+        'sname': clean_sname(cfg['name'], ename, cfg.get('sname', '')),
         'intro': cfg.get('intro', ''),
         'modid': cfg['modid'],
         'cfprojectid': str(cfg.get('cfprojectid', '')),
@@ -191,7 +228,7 @@ def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
     if cfg.get('tags'):
         data['tags'] = join_field(cfg['tags'])
     if cfg.get('keys'):
-        data['keys'] = join_field(cfg['keys'])
+        data['keys'] = clean_keys(cfg['keys'])
     if cfg.get('coverPath'):
         cover = Path(cfg['coverPath'])
         if not cover.exists():

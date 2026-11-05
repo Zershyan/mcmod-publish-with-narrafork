@@ -183,21 +183,23 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 ### 6.1 选提交通道
 
+**本地脚本优先，MCP 是拿不到 cookie 时的下位替代。**
+
 ```bash
 ls .narrafork/mcmod-cookie.txt
 ```
 
-有 cookie → 走 6.3 的 `submit.py` 流程。
-
-没有 cookie → 按顺序选通道，**前面的能用就不要往下走**：
-
 | 顺序 | 条件 | 做法 |
 |---|---|---|
-| 1 | 有 browsermcp | 打开百科确认已登录（没登录就让用户登），`console.py` 生成脚本后 `eval` 执行——浏览器自带登录态，不需要 cookie |
-| 2 | 有 `Browser` 工具 | 起可见会话让用户登录，再 `python scripts/mcmod/cookies.py dump --profile <目录> --out .narrafork/mcmod-cookie.txt`，之后走 `submit.py` |
-| 3 | 都没有 | `console.py` 生成脚本，用户自己在百科页面 F12 粘贴运行 |
+| 1 | 有 cookie 文件 | 直接走 6.3 的 `submit.py`，这是首选路径 |
+| 2 | 没 cookie，有 `Browser` 工具 | 起可见会话让用户登录，再 `python scripts/mcmod/cookies.py dump --profile <目录> --out .narrafork/mcmod-cookie.txt`，回到 1 |
+| 3 | 没 cookie，用户愿意配合 | 让他从 F12 的 Network 复制 `Cookie` 请求头，写进同一个文件，回到 1 |
+| 4 | 前三条都走不通 | 才用 browsermcp 在页面里跑 `console.py` 的脚本——浏览器自带登录态，不需要 cookie |
+| 5 | 连 MCP 都没有 | `console.py` 生成脚本，用户自己在百科页面 F12 粘贴运行 |
 
-第 3 层也可以让用户从 F12 的 Network 复制 `Cookie` 请求头交过来，写进 `.narrafork/mcmod-cookie.txt` 后走 `submit.py`。**不要用 `document.cookie`**，拿不到 httpOnly 凭证。
+**任何修改也一样**：改已有条目、补资料、处理退回，都先走本地脚本（`submit.py` 带 `redo-id`），MCP 只在前三条都不成立时兜底。
+
+**不要用 `document.cookie`**，拿不到 httpOnly 凭证。
 
 拿到 cookie 时验证一下：`python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run` 能打印 JSON 就是有效。
 

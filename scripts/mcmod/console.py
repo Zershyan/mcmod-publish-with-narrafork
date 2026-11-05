@@ -39,6 +39,26 @@ def cover_base64(cfg: dict) -> str:
     return base64.b64encode(file.read_bytes()).decode()
 
 
+def clean_keys(value, limit: int = 10, max_width: int = 24) -> str:
+    """搜索关键词只该放别名、外号、分词——百科明文禁止滥用。"""
+    if not value:
+        return ''
+    items = value if isinstance(value, list) else str(value).split(',')
+    kept = []
+    for item in items:
+        item = str(item).strip()
+        if not item:
+            continue
+        width = sum(2 if ord(ch) > 127 else 1 for ch in item)
+        if width > max_width:
+            print(f'关键词「{item}」太长了，不像别名，已跳过')
+            continue
+        kept.append(item)
+    if len(kept) > limit:
+        print(f'关键词有 {len(kept)} 条，只保留前 {limit} 条')
+    return ','.join(kept[:limit])
+
+
 def secondary_name(name: str, ename: str) -> str:
     """主要名称没有中文时，次要名称必须留空，否则百科会弹重复警告。"""
     if not ename:
@@ -46,15 +66,32 @@ def secondary_name(name: str, ename: str) -> str:
     return ename if re.search(r'[\u4e00-\u9fff]', name or '') else ''
 
 
+def clean_sname(name: str, ename: str, sname: str) -> str:
+    """简写只能是社区通用缩写：字母数字符号，且不能与主/次名称重复。"""
+    if not sname:
+        return ''
+    if not re.fullmatch(r'[A-Za-z0-9 ._+#&-]+', sname):
+        print(f'简写名称「{sname}」含字母数字符号以外的字符，已跳过')
+        return ''
+    if sname in (name, ename):
+        print(f'简写名称「{sname}」与主/次名称相同，已跳过')
+        return ''
+    if len(sname) > 16:
+        print(f'简写名称「{sname}」有 {len(sname)} 个字符，不像缩写，已跳过')
+        return ''
+    return sname
+
+
 def to_module_data(cfg: dict) -> dict:
     """把 mod-config 的写法转成控制台模板期待的字段。"""
     categories = cfg.get('category') or []
     core = next((c for c in categories if c in ('实用', '科技', '魔法', '冒险', '农业', '装饰', 'LIB', '魔改', '辅助')), '实用')
     cover = cover_base64(cfg)
+    ename = secondary_name(cfg['name'], cfg.get('ename', ''))
     return {
         'name': cfg['name'],
-        'ename': secondary_name(cfg['name'], cfg.get('ename', '')),
-        'sname': cfg.get('sname', ''),
+        'ename': ename,
+        'sname': clean_sname(cfg['name'], ename, cfg.get('sname', '')),
         'intro': cfg.get('intro', ''),
         'modid': cfg['modid'],
         'cfprojectid': str(cfg.get('cfprojectid', '')),
@@ -68,7 +105,7 @@ def to_module_data(cfg: dict) -> dict:
         'status': cfg.get('status', '活跃'),
         'source': cfg.get('source', '开源'),
         'tags': ','.join(cfg.get('tags') or []),
-        'keys': ','.join(cfg.get('keys') or []),
+        'keys': clean_keys(cfg.get('keys')),
         'authors': cfg.get('authors') or [],
         'links': [[l.get('title', ''), l.get('href', ''), l.get('text', '')]
                   for l in cfg.get('links') or []],

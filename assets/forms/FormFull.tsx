@@ -917,7 +917,7 @@ export default function App() {
 									<Grid.Col span={4}>
 										<TextInput
 											label="简写名称"
-											description="社区通用缩写，如 GT6、TiC2；没有就留空"
+											description="必须由用户提供的社区通用缩写，如 GT6、TiC2；没有就留空，不要自己编"
 											placeholder={D.defaults.wSname || undefined}
 											{...text("wSname")}
 										/>
@@ -991,6 +991,7 @@ export default function App() {
 									<Grid.Col span={6}>
 										<TagsInput
 											label="模组标签"
+											description="把相似模组归到一起的通用词，如 科技、魔法"
 											placeholder={D.defaults.wTags}
 											{...multi("wTags")}
 										/>
@@ -998,6 +999,7 @@ export default function App() {
 									<Grid.Col span={6}>
 										<TagsInput
 											label="搜索关键词"
+											description="只填用户给的别名、外号；百科禁止滥用，不清楚就留空"
 											placeholder={D.defaults.wKeys}
 											{...multi("wKeys")}
 										/>

@@ -39,7 +39,7 @@ scripts/
   project/           工程侧：版本号回填、占位图标生成与样式存档（.narrafork/icon-style.json）
 ```
 
-百科的提交通道按环境能力降级：有 browsermcp 就在页面里跑控制台脚本（不需要 cookie），有 `Browser` 工具就 dump cookie 走 `submit.py`，都没有就把脚本给用户手动粘贴。细节见 SKILL.md 第 6 步。
+百科**优先用本地脚本**（`submit.py`，需要一份 cookie）：有 cookie 直接跑，没有就用 `Browser` 工具登录后 `cookies.py dump`，或让用户从 F12 复制 `Cookie` 头。只有这些都不成立时，才用 browsermcp 在页面里跑 `console.py` 的脚本，再不行就由用户自己 F12 粘贴。
 
 ## 表单
 
@@ -55,13 +55,20 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/<名称>/data.ts
 
 ## 依赖
 
+第一次用时装一次，之后所有工程共用这一份：
+
 ```bash
-python -m pip install --target .narrafork/pylibs curl_cffi
-python -m pip install --target .narrafork/pylibs websocket-client   # 只有从 CDP 读 cookie 时需要
-python -m pip install Pillow                                        # 生成占位图标、处理封面
+python scripts/setup.py          # 装到 skill 目录的 .narrafork/pylibs
+python scripts/setup.py --check  # 只检查缺什么
 ```
 
-脚本会自己找 `.narrafork/pylibs`（`cfhttp.py` 里探测），不用手动设 `CF_HTTP_RUNTIME`。`curl_cffi` 用来伪装 TLS 指纹，普通客户端会被 Cloudflare 拦。
+| 包 | 用途 |
+|---|---|
+| `curl_cffi` | CurseForge 请求，伪装 Chrome 的 TLS 指纹，否则过不了 Cloudflare |
+| `websocket-client` | 从浏览器进程读 cookie |
+| `Pillow` | 生成占位图标、处理封面裁切 |
+
+工程自己 `.narrafork/pylibs` 里装过依赖的话优先用工程的（老工程不受影响），没有就落到 skill 那份。`CF_HTTP_RUNTIME` 仍可强制指定。
 
 ## 凭据
 

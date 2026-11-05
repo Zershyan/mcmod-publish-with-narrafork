@@ -10,21 +10,25 @@ import sys
 import urllib.error
 from pathlib import Path
 
-# curl_cffi 的安装目录：CF_HTTP_RUNTIME 优先，其次工程里的 .narrafork/pylibs
+_SCRIPTS = Path(__file__).resolve().parents[1]
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from deps import ensure_deps
+
+# 依赖目录：CF_HTTP_RUNTIME 优先，其次工程本地，最后 skill 目录
 _RUNTIME = os.environ.get('CF_HTTP_RUNTIME')
-if not _RUNTIME:
-    local = Path.cwd() / '.narrafork' / 'pylibs'
-    if (local / 'curl_cffi').is_dir():
-        _RUNTIME = str(local)
-if _RUNTIME and _RUNTIME not in sys.path:
-    sys.path.insert(0, _RUNTIME)
+if _RUNTIME:
+    if _RUNTIME not in sys.path:
+        sys.path.insert(0, _RUNTIME)
+else:
+    ensure_deps()
 
 try:
     from curl_cffi import requests
 except ImportError as error:
-    hint = (f'python -m pip install --target "{_RUNTIME}" curl_cffi'
-            if _RUNTIME else 'python -m pip install curl_cffi')
-    raise SystemExit(f'缺少 curl_cffi，安装：{hint}') from error
+    raise SystemExit(
+        '缺少 curl_cffi。装到 skill 目录（所有工程共用）：python scripts/setup.py'
+    ) from error
 
 
 def system_env(name: str) -> str | None:

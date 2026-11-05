@@ -16,6 +16,11 @@ from pathlib import Path
 
 STYLE_SKILL = Path.home() / '.agents' / 'skills' / 'zershyan-mcmod-style'
 
+_SCRIPTS = Path(__file__).resolve().parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from deps import active as active_deps
+
 
 def read_properties(path: Path) -> dict:
     values = {}
@@ -127,11 +132,12 @@ def collect() -> dict:
 
 
 def collect_env() -> dict:
-    pylibs = Path('.narrafork/pylibs')
+    deps = active_deps()
     cookie = Path('.narrafork/mcmod-cookie.txt')
     return {
         'token': bool(os.environ.get('CURSEFORGE_API_TOKEN')),
-        'pylibs': (pylibs / 'curl_cffi').exists(),
+        'pylibs': deps is not None,
+        'pylibsPath': str(deps) if deps else '',
         'cookie': cookie.exists(),
         'projectJson': Path('curseforge/project.json').exists(),
         'gameVersions': Path('curseforge/game-versions.json').exists(),
@@ -149,7 +155,7 @@ def next_steps(project: dict, env: dict) -> list:
     if not env['token']:
         steps.append('提醒用户设置 CURSEFORGE_API_TOKEN')
     if not env['pylibs']:
-        steps.append('python -m pip install --target .narrafork/pylibs curl_cffi websocket-client')
+        steps.append('python scripts/setup.py  # 依赖装到 skill 目录，所有工程共用')
     if not env['gameVersions']:
         steps.append('python scripts/cf/upload.py query curseforge')
     if not env['projectJson']:
@@ -209,6 +215,8 @@ def main():
     print(f"凭据      令牌 {'✓' if env['token'] else '✗'}   "
           f"依赖 {'✓' if env['pylibs'] else '✗'}   "
           f"百科 cookie {'✓' if env['cookie'] else '✗'}")
+    if env['pylibs']:
+        print(f"          {env['pylibsPath']}")
     print(f"记录      CF 项目 {'✓' if env['projectJson'] else '✗'}   "
           f"版本标签 {'✓' if env['gameVersions'] else '✗'}")
     print()

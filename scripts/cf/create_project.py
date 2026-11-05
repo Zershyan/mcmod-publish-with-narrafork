@@ -14,6 +14,13 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+_SCRIPTS = HERE.parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from deps import ensure_deps
+
+ensure_deps()
+
 TEMPLATE = HERE / 'create_project_template.js'
 
 
@@ -44,6 +51,8 @@ def main():
                         help='不把图标塞进脚本，体积小很多，图标另行上传')
     parser.add_argument('--step', action='store_true',
                         help='单步模式：每次只推进一个页面，适合会被超时打断的自动化工具')
+    parser.add_argument('--pause-at', metavar='STEP',
+                        help='填完该步骤后暂停（如 general），留给外部操作，再次执行继续')
     args = parser.parse_args()
 
     config_path = Path(args.config).resolve()
@@ -79,6 +88,7 @@ def main():
         # 默认自动点创建按钮；启用前必须先用交互式提问向用户确认
         'autoCreate': bool(config.get('autoCreate', True)),
         'singleStep': bool(config.get('singleStep', False)) or args.step,
+        'pauseAt': config.get('pauseAt') or args.pause_at or '',
     }
     if not 1 <= len(data['summary']) <= 256:
         raise SystemExit(f'简介长度 {len(data["summary"])}，CurseForge 限制 256 字符')

@@ -12,7 +12,15 @@
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
+
+_SCRIPTS = Path(__file__).resolve().parents[1]
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from deps import ensure_deps
+
+ensure_deps()
 
 SKILL_ROOT = Path(__file__).resolve().parents[2]
 STYLE_FILE = SKILL_ROOT / '.narrafork' / 'icon-style.json'

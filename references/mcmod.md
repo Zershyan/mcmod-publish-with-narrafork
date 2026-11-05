@@ -4,17 +4,11 @@
 
 ## 登录与凭据
 
-三层回退，从上往下试，**前面的能用就不要往下走**。
+**本地脚本优先，MCP 是拿不到 cookie 时的下位替代。** 发布、改条目、补资料、处理退回都一样——只要 `submit.py` 能跑，就不该走浏览器。
 
-### 第一层：browsermcp（首选）
+按下面顺序准备凭据，拿到 cookie 就停在第一步：
 
-MCP 连的是用户已登录的 Chrome，直接在页面里执行提交脚本即可——浏览器自带登录态和验证码，**完全不需要导出 cookie**。
-
-1. `goto https://www.mcmod.cn/` 看页头有没有用户名；没登录就让用户在这个浏览器里登录
-2. `python scripts/mcmod/console.py docs/mcmod/mod-config.json` 生成脚本
-3. `eval <脚本内容>` 执行，`console` 看返回
-
-### 第二层：Browser 工具 + CDP 导出 cookie
+### 首选：导出一份 cookie
 
 有 `Browser` 工具时 launch 一个 headed 会话，让用户在里面登录（QQ 扫码或账号密码），然后从浏览器进程读完整 cookie：
 
@@ -24,21 +18,29 @@ python scripts/mcmod/cookies.py dump --profile <profile目录> --out .narrafork/
 
 profile 目录里有 `DevToolsActivePort`，第一行是调试端口。NarraFork 启动的会话 profile 形如 `%TEMP%\puppeteer_dev_chrome_profile-*`。
 
-拿到 cookie 后走 `submit.py` 本地提交，验证码由 agent 取图问用户。
+没有 `Browser` 工具时，让用户从 F12 的 Network 复制某次请求的 `Cookie` 请求头，写进同一个文件。
 
 **为什么不能用 `document.cookie`**：登录凭证 `dSit_2132_auth` 是 httpOnly，页面里读不到。实测 `document.cookie` 只有 5 个，CDP 能拿到 11 个。
 
-### 兜底：控制台脚本，用户自己 F12 粘贴
+拿到就走 `submit.py`，验证码在本地取图问用户。
 
-MCP 和 Browser 都没有时：
+### 下位替代：browsermcp 在页面里跑控制台脚本
+
+上面两条都走不通时，才用 MCP——它连的是用户已登录的 Chrome，页面自带登录态和验证码：
+
+1. `goto https://www.mcmod.cn/` 看页头有没有用户名；没登录就让用户在这个浏览器里登录
+2. `python scripts/mcmod/console.py docs/mcmod/mod-config.json` 生成脚本
+3. `eval <脚本内容>` 执行，`console` 看返回
+
+### 最后兜底：用户自己 F12 粘贴
+
+连 MCP 都没有时：
 
 ```bash
 python scripts/mcmod/console.py docs/mcmod/mod-config.json
 ```
 
 生成一段 JS，用户在对应页面（模组条目 `/class/add/`，资料条目 `/item/add/<模组ID>/`）**先填好验证码**，再 F12 粘贴运行。脚本自己填表、组装 `getEditorData` 并 POST 到 `doEdit`。
-
-也可以让用户从 F12 的 Network 里复制某次请求的 `Cookie` 头交过来，写进 `.narrafork/mcmod-cookie.txt`，之后走 `submit.py`。别让用户用 `document.cookie` 取，那拿不到 httpOnly 凭证。
 
 | 优点 | 限制 |
 |---|---|
@@ -127,6 +129,8 @@ data=<URL 编码的 JSON>
 |---|---|
 | `api`、`platform`、`category`、`status`、`source`、`mode-*` | `{序号: 值}`，序号只是遍历下标，服务端只认值 |
 | `tags`、`keys` | 英文逗号分隔的**字符串**。实测：`tagsinput('items')` 是数组，`el.value` 是 `"甲,乙,丙"`，表单序列化取 `el.value`；传 `{序号: 值}` 会把键当成标签显示 |
+
+两者语义不同：`tags` 是「把相似模组归到一起」的通用词（科技、魔法），`keys` 只用于**别名、外号、分词**，百科写明「禁止滥用，不清楚用法请留空」。`submit.py` / `console.py` 都会清洗 `keys`：单条过宽或超过 10 条就丢掉。
 | `mcversion` | `{加载器ID: {序号: 版本ID}}`，两层嵌套 |
 | `license.0.list.0.type` | **数组** |
 | `license.0.list.0.name` | 字符串 |

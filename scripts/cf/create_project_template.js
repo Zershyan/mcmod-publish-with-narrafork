@@ -440,6 +440,17 @@
       console.log(`%c${blocked || '有字段未填上，已停在当前步骤；处理后可再次运行脚本'}`, 'color:#c92a2a;font-weight:bold');
       break;
     }
+    // 暂停点：填完本页就停，留给外部操作（例如用 upload 传图标），再次执行继续
+    if (DATA.pauseAt && step === DATA.pauseAt) {
+      const key = 'cf_paused_' + step;
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        console.log(`%c已在 ${step} 暂停，完成外部操作后再执行一次脚本`, 'color:#1971c2;font-weight:bold');
+        console.log({ step: stepOf(), hash: location.hash, report });
+        return;
+      }
+    }
+
     // 9. 点 Next；按钮会随重渲染短暂消失或被禁用，先轮询等待
     const next = await waitButton(/^next$/);
     if (!next) {
