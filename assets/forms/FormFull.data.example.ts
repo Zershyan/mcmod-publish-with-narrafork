@@ -46,9 +46,13 @@ export const DATA = {
 		cfCategory: "API and Library",
 		cfExtraCategories: [] as string[],
 		cfSourceUrl: "https://github.com/Zershyan/SnowyCrescentCore",
+		/** 建项时启用 Project Pages；建好后到项目设置里开启也可以 */
+		cfProjectPages: true,
 
 		wName: "（待确认）",
-		wEname: "SnowyCrescentCore",
+		/** 只有主要名称是中文时才填；主要名称本身是英文就留空 */
+		wEname: "",
+		wSname: "",
 		wIntro: "供其他模组使用的库，提供能力注册、玩家动画与数据生成 API",
 		wModid: "sccore",
 		wCfId: "建完 CF 项目后填入",

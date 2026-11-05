@@ -71,6 +71,7 @@
   setTags('class-cfprojectid', D.cfprojectid);
   setTags('class-mrprojectid', D.mrprojectid);
   setTags('class-tags', D.tags);
+  setTags('class-keys', D.keys);
   checkByLabel('class-mode-1', D.client);
   checkByLabel('class-mode-2', D.server);
   checkByLabel('class-status', D.status);
@@ -125,6 +126,19 @@
     const input = document.getElementById('cover-select-button');
     input.files = dt.files;
     input.dispatchEvent(new Event('change', {bubbles: true}));
+    await sleep(1500);
+    // 注入后页面会弹出裁剪框，点「更新封面」把裁剪结果写回表单
+    const update = document.getElementById('cover-update-button');
+    if (update && !update.classList.contains('hidden')) {
+      update.click();
+      await sleep(1500);
+      const preview = document.getElementById('class-cover-preview-img');
+      const src = preview ? preview.src : '';
+      if (/^data:image/.test(src)) console.log('%c封面已注入并确认裁剪', 'color:#0a0;font-weight:bold');
+      else warn.push('封面注入后没确认成功，请手动点「更新封面」');
+    } else {
+      warn.push('封面注入后没等到「更新封面」按钮，请手动处理裁剪框');
+    }
   }
 
   const check = {
@@ -138,5 +152,5 @@
   console.table(check);
   if (!check.MODID) warn.push('MODID 为空，必须手动补填');
   if (warn.length) console.warn('需要手动处理：\n' + warn.join('\n'));
-  console.log('%c填写完成。' + (D.injectCover ? '请在裁剪框确认封面；' : '封面请点「上传封面」手动选择：' + D.coverPath + '；') + '检查三页内容后自己点「完成添加」。', 'color:#0a0;font-size:14px');
+  console.log('%c填写完成。' + (D.injectCover ? '封面已自动注入并确认裁剪；' : '封面请点「上传封面」手动选择：' + D.coverPath + '；') + '检查三页内容后自己点「完成添加」。', 'color:#0a0;font-size:14px');
 })();

@@ -13,7 +13,9 @@
 生成后在目标页面按 F12，粘贴运行。运行前先在页面上把验证码填好。
 """
 import argparse
+import base64
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -25,13 +27,33 @@ TEMPLATES = {
 }
 
 
+def cover_base64(cfg: dict) -> str:
+    """有封面文件就转成 base64，页面里注入文件输入框后由页面自己裁剪上传。"""
+    path = cfg.get('coverPath')
+    if not path:
+        return ''
+    file = Path(path)
+    if not file.exists():
+        print(f'封面不存在，跳过注入：{file}')
+        return ''
+    return base64.b64encode(file.read_bytes()).decode()
+
+
+def secondary_name(name: str, ename: str) -> str:
+    """主要名称没有中文时，次要名称必须留空，否则百科会弹重复警告。"""
+    if not ename:
+        return ''
+    return ename if re.search(r'[\u4e00-\u9fff]', name or '') else ''
+
+
 def to_module_data(cfg: dict) -> dict:
     """把 mod-config 的写法转成控制台模板期待的字段。"""
     categories = cfg.get('category') or []
     core = next((c for c in categories if c in ('实用', '科技', '魔法', '冒险', '农业', '装饰', 'LIB', '魔改', '辅助')), '实用')
+    cover = cover_base64(cfg)
     return {
         'name': cfg['name'],
-        'ename': cfg.get('ename', ''),
+        'ename': secondary_name(cfg['name'], cfg.get('ename', '')),
         'sname': cfg.get('sname', ''),
         'intro': cfg.get('intro', ''),
         'modid': cfg['modid'],
@@ -46,13 +68,15 @@ def to_module_data(cfg: dict) -> dict:
         'status': cfg.get('status', '活跃'),
         'source': cfg.get('source', '开源'),
         'tags': ','.join(cfg.get('tags') or []),
+        'keys': ','.join(cfg.get('keys') or []),
         'authors': cfg.get('authors') or [],
         'links': [[l.get('title', ''), l.get('href', ''), l.get('text', '')]
                   for l in cfg.get('links') or []],
         'content': cfg.get('content', ''),
         'images': {},
-        'cover': '',
-        'injectCover': False,
+        'cover': cover,
+        'injectCover': bool(cover),
+        'coverPath': cfg.get('coverPath', ''),
     }
 
 

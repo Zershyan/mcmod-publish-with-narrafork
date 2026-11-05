@@ -57,6 +57,7 @@ def main():
         'dropdowns': config.get('dropdowns', []),
         'distribution': config.get('distribution', 'Allow distribution to 3rd party'),
         'allowComments': config.get('allowComments', True),
+        'projectPages': bool(config.get('projectPages', True)),
         'description': description,
         'iconBase64': icon,
         # 默认自动点创建按钮；启用前必须先用交互式提问向用户确认

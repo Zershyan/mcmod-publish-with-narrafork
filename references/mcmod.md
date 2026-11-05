@@ -71,6 +71,26 @@ data=<URL 编码的 JSON>
 {"state": 122}  未登录
 ```
 
+## 封面
+
+页面上的「上传封面」是文件输入框，裁剪确认后结果写进隐藏字段 `[data-multi-id=cover-data]`，值是 `data:image/png;base64,…`。**两条路径都能带封面**：
+
+| 路径 | 做法 |
+|---|---|
+| `submit.py` | 配置里给 `coverPath`，脚本按 16:10 居中裁切、缩放到 480×300，转 data URL 写进 `class-data["cover-data"]` |
+| 控制台脚本 | 同样给 `coverPath`，`console.py` 转 base64 塞进脚本，页面里注入文件输入框并自动点「更新封面」 |
+
+**16:10 是硬要求**：百科封面只收 480×300 / 240×150 这类比例，脚本统一居中裁切再缩放，原图比例不对也不会变形。
+
+实测（2026-11，添加页）：
+
+```
+上传 → 裁剪框打开（cover-canvas 变 data URL）→ 点 #cover-update-button
+→ 隐藏字段 #class-cover[data-multi-id=cover-data] 值变成 data:image/png;base64,…（18K 字符）
+```
+
+`cover-data` 提交时用的形态（字符串还是 `{序号: 值}`）尚未实测，脚本按字符串提交；不生效就改用控制台脚本，那条是页面内注入，行为确定。
+
 ## 提交结构
 
 ```json
@@ -92,8 +112,8 @@ data=<URL 编码的 JSON>
     "mode-2":    { "0": "1" },
     "status":    { "0": "1" },
     "source":    { "0": "1" },
-    "tags":      { "0": "标签" },
-    "keys":      { "0": "关键词" },
+    "tags":      "标签1,标签2",
+    "keys":      "关键词1,关键词2",
     "link":   { "0": { "title": "curseforge", "custom": "", "href": "地址", "text": "" } },
     "license": { "0": { "title": "", "list": { "0": { "type": ["source"], "name": "AGPL-3.0", "link": "", "text": "" } } } },
     "author": { "link": { "0": { "select": ["owner"], "id": "<作者ID>" } }, "add": {} }
@@ -105,7 +125,8 @@ data=<URL 编码的 JSON>
 
 | 字段 | 类型 |
 |---|---|
-| `api`、`platform`、`category`、`status`、`source`、`mode-*`、`tags`、`keys` | `{序号: 值}`，序号只是遍历下标，服务端只认值 |
+| `api`、`platform`、`category`、`status`、`source`、`mode-*` | `{序号: 值}`，序号只是遍历下标，服务端只认值 |
+| `tags`、`keys` | 英文逗号分隔的**字符串**。实测：`tagsinput('items')` 是数组，`el.value` 是 `"甲,乙,丙"`，表单序列化取 `el.value`；传 `{序号: 值}` 会把键当成标签显示 |
 | `mcversion` | `{加载器ID: {序号: 版本ID}}`，两层嵌套 |
 | `license.0.list.0.type` | **数组** |
 | `license.0.list.0.name` | 字符串 |
@@ -141,7 +162,7 @@ input[name="class-mcversion-13"]   NeoForge
 - `mode` 0=待考证 1=需装 2=可选 3=无效
 - `status` 0=不确定 1=活跃 2=半弃坑 3=停更
 - `source` 0=不显示 1=开源 2=闭源
-- `category` 核心 9 个 `1,x`，杂项 25 个 `0,x`
+- `category` 核心元素 9 个 `1,x`；世界生成器 5 个 + 杂项 21 个，共 26 个 `0,x`
 - `role` owner/programmer/artist/sound/planner/writer/builder/contributor/mascot/other
 - `licenseType` source/asset/artifact/other
 

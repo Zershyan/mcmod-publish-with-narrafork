@@ -56,7 +56,8 @@
 | 字段 | 取自 |
 |---|---|
 | 主要名称 | **问用户** |
-| 次要名称 | `mod_name` |
+| 次要名称 | 主要名称**有中文**时才填（通常是 `mod_name`）；主要名称本身是英文就留空，否则百科会弹重复警告 |
+| 简写名称 | **问用户**，或从社区通用缩写取（GT6、TiC2 这类），只允许字母数字符号 |
 | 一句话简介 | `mod_description` |
 | MODID | `mod_id` |
 | CF Project ID | `curseforge/project.json` |
@@ -70,7 +71,7 @@
 | 许可证协议 | `mod_license` 映射到 SPDX 代码；找不到对应项时留空或填 `ARR` |
 | 作者 | **问名字**，脚本查 ID |
 | 相关链接 | git remote + CF 项目页 |
-| 封面 | `logo.png` 转 16:10，没有则问用户 |
+| 封面 | `logo.png` 转 16:10（`submit.py` / `console.py` 都吃 `coverPath`），没有则问用户 |
 | 正文 | 按源码整理 |
 
 ## 百科资料条目

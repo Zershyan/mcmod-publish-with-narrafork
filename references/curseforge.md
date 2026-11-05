@@ -144,7 +144,17 @@ python scripts/cf/create_project.py curseforge/cf_create_project.json --no-icon
 python scripts/cf/create_project.py curseforge/cf_create_project.json --no-icon --step
 ```
 
-`autoCreate` 默认 true，脚本会自己点创建按钮并读回 `projectId`/`slug`——表单已经确认过内容，不需要再问一遍。想自己按最后一下，就在配置里把 `autoCreate` 设成 false。
+`autoCreate` 默认 true，脚本会自己点创建按钮并读回 `projectId`/`slug`——FormConfirm 已经确认过内容，不需要再问一遍。想自己按最后一下，就在配置里把 `autoCreate` 设成 false。
+
+**Project Pages**：脚本会在 General 页勾上对应开关；向导里没有这一项时报告里会写「请到项目设置启用」，建好后手动开一次。
+
+**项目链接（Source / Issues / Wiki）不在建项向导里**，建完再补：
+
+```bash
+python scripts/cf/set_links.py --source https://github.com/<user>/<repo>
+```
+
+产物是 `curseforge/cf_set_links.js`，在项目设置页 `eval` 执行，`console` 看每项是否填上，最后手动点保存。字段靠文案匹配（source / issue / wiki），页面改版时会提示「没找到输入框」。
 
 失败时跑 `scripts/cf/dom_probe.js` 抓页面结构，按实际结构改模板。
 

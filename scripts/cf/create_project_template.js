@@ -221,7 +221,7 @@
 
   // 按向导步骤决定要填的字段；未知步骤全部尝试
   const STEP_FIELDS = {
-    general: ['name', 'summary', 'dropdowns', 'comments', 'icon'],
+    general: ['name', 'summary', 'dropdowns', 'comments', 'pages', 'icon'],
     description: ['description'],
     license: ['license'],
   };
@@ -314,6 +314,22 @@
         }
         mark('Allow Comments', !box || checked(box), box ? (checked(box) ? '已勾选' : '点击后仍未勾选，请手动勾选') : '已点击文字，请确认是否勾上');
       } else mark('Allow Comments', false, '当前步骤没有该选项');
+    }
+
+    // 4.5 项目页面开关：向导里如果没这个选项，建好后到设置里补
+    if (want('pages') && DATA.projectPages) {
+      const pageBox = [...document.querySelectorAll('input[type="checkbox"], [role="checkbox"]')]
+        .find((el) => /project pages/i.test(el.closest('label')?.innerText || el.parentElement?.innerText || el.parentElement?.parentElement?.innerText || el.getAttribute('aria-label') || ''));
+      const pageText = [...document.querySelectorAll('label, span, p, div')].filter(visible).find((el) => norm(el.textContent) === 'project pages');
+      const isOn = (el) => el && (el.checked === true || el.getAttribute('aria-checked') === 'true');
+      if (pageBox || pageText) {
+        if (!isOn(pageBox)) {
+          (pageBox && visible(pageBox) ? pageBox : (pageBox?.closest('label') || pageText)).click();
+          await sleep(300);
+        }
+        mark('Project Pages', !pageBox || isOn(pageBox),
+          pageBox ? (isOn(pageBox) ? '已启用' : '点击后仍未勾选，请手动勾选') : '已点击文字，请确认是否勾上');
+      } else mark('Project Pages', false, '当前步骤没有该选项，建好后到项目设置里启用');
     }
 
     // 5. 项目图标：写入文件输入框后自动确认裁剪框（名称已是本项目时视为已上传过）

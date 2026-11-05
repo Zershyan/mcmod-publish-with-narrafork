@@ -140,8 +140,16 @@ cp assets/forms/FormConfirm.data.example.ts .narrafork/gen_ui/confirm/data.ts
 
 用户提交后才动手，顺序固定：
 
-1. `project.json` 不存在 → 按 [建项目](references/curseforge.md#项目创建) 建，拿到 `projectId` / `slug`
-2. 上传：
+1. `project.json` 不存在 → 按 [建项目](references/curseforge.md#项目创建) 建，拿到 `projectId` / `slug`。建项脚本会顺手勾上 Project Pages（向导里没这一项就在报告里提示）
+2. 补填向导里没有的链接（`cfSourceUrl` 等）：
+
+```bash
+python scripts/cf/set_links.py --source <GitHub 地址>
+```
+
+在项目设置页 `eval` 生成的脚本，`console` 看结果，填完手动点保存。
+
+3. 上传：
 
 ```bash
 python scripts/cf/upload.py upload curseforge/release-manifest.json \
@@ -199,6 +207,8 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 **没 cookie 时**走控制台脚本：验证码由用户直接在页面上填，不用取图也不用问。
 
 两种方式的成功标志都是 `{"state": 0, "url": "/verify.html?..."}`——**这个 url 是审核列表，不是条目地址**。
+
+**封面**：两条路径都给 `coverPath` 就行。`submit.py` 会按 16:10 居中裁切、缩放到 480×300 后写进隐藏字段 `cover-data`；控制台脚本则在页面里注入文件输入框并自动确认裁剪。原图比例不对也不会变形。
 
 ### 6.4 资料条目（可选）
 

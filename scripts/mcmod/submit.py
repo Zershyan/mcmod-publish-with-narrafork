@@ -8,6 +8,8 @@
 cookie 由 cookies.py 生成，默认读 .narrafork/mcmod-cookie.txt。
 """
 import argparse
+import base64
+import io
 import json
 import re
 import sys
@@ -107,10 +109,52 @@ def indexed(values) -> dict:
     return {str(i): v for i, v in enumerate(values)} if values else {}
 
 
+def has_chinese(text: str) -> bool:
+    return bool(re.search(r'[\u4e00-\u9fff]', text or ''))
+
+
+def secondary_name(name: str, ename: str) -> str:
+    """主要名称没有中文时，次要名称必须留空，否则百科会弹重复警告。"""
+    if not ename:
+        return ''
+    return ename if has_chinese(name) else ''
+
+
+def join_field(value) -> str:
+    """标签与关键词在页面上是逗号分隔的文本框，不是多值对象。"""
+    return value if isinstance(value, str) else ','.join(str(item) for item in value)
+
+
+def cover_data_url(path: Path, width: int = 480, height: int = 300) -> str:
+    """按 16:10 居中裁切后缩放，返回页面隐藏字段要的 data URL。"""
+    try:
+        from PIL import Image
+    except ImportError:
+        raise SystemExit('需要 Pillow 处理封面：python -m pip install Pillow')
+
+    image = Image.open(path).convert('RGB')
+    ratio = width / height
+    w, h = image.size
+    if w / h > ratio:
+        cropped = int(h * ratio)
+        left = (w - cropped) // 2
+        image = image.crop((left, 0, left + cropped, h))
+    else:
+        cropped = int(w / ratio)
+        top = (h - cropped) // 2
+        image = image.crop((0, top, w, top + cropped))
+    image = image.resize((width, height), Image.LANCZOS)
+
+    buffer = io.BytesIO()
+    image.save(buffer, 'PNG', optimize=True)
+    return 'data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode()
+
+
 def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
     data = {
         'name': cfg['name'],
-        'ename': cfg.get('ename', ''),
+        'ename': secondary_name(cfg['name'], cfg.get('ename', '')),
+        'sname': cfg.get('sname', ''),
         'intro': cfg.get('intro', ''),
         'modid': cfg['modid'],
         'cfprojectid': str(cfg.get('cfprojectid', '')),
@@ -145,9 +189,14 @@ def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
         data['mcversion'] = mc_map
 
     if cfg.get('tags'):
-        data['tags'] = indexed(cfg['tags'])
+        data['tags'] = join_field(cfg['tags'])
     if cfg.get('keys'):
-        data['keys'] = indexed(cfg['keys'])
+        data['keys'] = join_field(cfg['keys'])
+    if cfg.get('coverPath'):
+        cover = Path(cfg['coverPath'])
+        if not cover.exists():
+            raise SystemExit(f'封面不存在：{cover}')
+        data['cover-data'] = cover_data_url(cover)
 
     if cfg.get('links'):
         data['link'] = {

@@ -65,6 +65,8 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 提交结果里 `changed` 只装用户改过的字段，其余沿用 `defaults` 的值——工具显示层会截断长内容，整份回传会让后面的字段消失。
 
+`cfProjectPages` 控制建项时是否勾上 Project Pages；`cfSourceUrl` 由建项后的 `set_links.py` 填进项目设置，向导里没有这一项。
+
 ### FormRelease.data.example.ts
 
 见文件内注释。核心是 `project`、`released`（已发布摘要，`version` 填线上 displayName）、`versions`（待发布，`modVersion` 同样填 `mod_version`）。

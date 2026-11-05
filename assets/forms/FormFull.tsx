@@ -166,6 +166,14 @@ const LOADERS = ["NeoForge", "Forge", "Fabric"];
 const RELEASE_TYPES = ["release", "beta", "alpha"];
 const ENVS = ["双端", "仅客户端", "仅服务端"];
 const CORE_ELEMENTS = ["实用", "科技", "魔法", "冒险", "农业", "装饰", "LIB", "魔改", "辅助"];
+
+/** 百科「世界生成器」与「杂项」两组的全部选项，和 mcmod-enums.json 的 categoryExtra 一致 */
+const EXTRA_ELEMENTS = [
+	"资源", "世界", "群系", "结构", "生物",
+	"能源", "存储", "物流", "道具", "安全", "红石", "食物", "模型", "关卡",
+	"指南", "破坏", "Meme", "中式", "日式", "西式", "恐怖", "建材", "生存",
+	"指令", "优化", "国创",
+];
 const LICENSE_TYPES = ["源码", "资产", "构件", "其他"];
 const LICENSE_NAMES = [
 	"ARR", "MIT", "AGPL-3.0", "GPL-3.0", "GPL-2.0", "LGPL-3.0",
@@ -318,6 +326,7 @@ export default function App() {
 	const distribute =
 		v.cfDistribute === undefined ? isOpenSource(license) : Boolean(v.cfDistribute);
 	const comments = v.cfComments === undefined ? true : Boolean(v.cfComments);
+	const pages = v.cfProjectPages === undefined ? true : Boolean(v.cfProjectPages);
 
 	const allMcVersions = Array.from(new Set(versions.flatMap((item) => item.mcVersions)));
 	const allLoaders = Array.from(new Set(versions.flatMap((item) => item.loaders)));
@@ -412,6 +421,7 @@ export default function App() {
 		// 只回传用户改过的字段：全量回传会被工具显示层截断，长描述尤其容易撑爆
 		const changed: Record<string, any> = {};
 		for (const [key, fallback] of Object.entries(D.defaults)) {
+			if (key === "wTags" || key === "wKeys") continue; // 这两个统一转成逗号字符串，见下
 			const current = v[key];
 			const empty =
 				current === undefined ||
@@ -420,19 +430,23 @@ export default function App() {
 			const value = empty ? fallback : current;
 			if (JSON.stringify(value) !== JSON.stringify(fallback)) changed[key] = value;
 		}
+		// 百科的标签与关键词是逗号分隔的文本框，不是多值对象
+		const joinTags = (value: any) =>
+			Array.isArray(value) ? value.join(",") : value ?? "";
 		const out = {
 			wiki,
 			changed,
 			cfDistribute: distribute,
 			cfComments: comments,
+			cfProjectPages: pages,
 			cfIcon: cfIcon?.name ?? "src/main/resources/logo.png",
 			cfAutoIcon: autoIcon,
 			cfIconStyle: iconStyle,
 			wCover: wCover?.name ?? "src/main/resources/logo.png",
 			wSource: (v.wSource as string) ?? derivedSource,
 			wikiTargets: targets,
-			wTags: indexed(v.wTags),
-			wKeys: indexed(v.wKeys),
+			wTags: joinTags(v.wTags ?? D.defaults.wTags),
+			wKeys: joinTags(v.wKeys ?? D.defaults.wKeys),
 			wClient: (v.wClient as string) ?? derivedClient,
 			wServer: (v.wServer as string) ?? derivedServer,
 			versions,
@@ -622,10 +636,25 @@ export default function App() {
 										</Group>
 									</Input.Wrapper>
 								</Grid.Col>
+								<Grid.Col span={5}>
+									<Input.Wrapper
+										label="启用 Project Pages"
+										description="建项向导没这一项时，建好后到项目设置里开"
+									>
+										<Group h={36} align="center">
+											<Switch
+												checked={pages}
+												onChange={(e) =>
+													setV((s) => ({ ...s, cfProjectPages: e.currentTarget.checked }))
+												}
+											/>
+										</Group>
+									</Input.Wrapper>
+								</Grid.Col>
 								<Grid.Col span={12}>
 									<TextInput
 										label="源码链接"
-										description="创建向导里没有这一项时，建完项目在项目设置 → Links → Source 补"
+										description="创建向导里没有这一项，建完项目后由 agent 到项目设置 → Links → Source 补填"
 										placeholder={D.defaults.cfSourceUrl}
 										{...text("cfSourceUrl")}
 									/>
@@ -824,7 +853,7 @@ export default function App() {
 									</Badge>
 								</Group>
 								<Grid gutter="sm">
-									<Grid.Col span={6}>
+									<Grid.Col span={4}>
 										<TextInput
 											label="主要名称（中文）"
 											withAsterisk
@@ -832,11 +861,19 @@ export default function App() {
 											{...text("wName")}
 										/>
 									</Grid.Col>
-									<Grid.Col span={6}>
+									<Grid.Col span={4}>
 										<TextInput
 											label="次要名称（英文）"
+											description="主要名称是中文时才填，否则留空"
 											placeholder={D.defaults.wEname}
 											{...text("wEname")}
+										/>
+									</Grid.Col>
+									<Grid.Col span={4}>
+										<TextInput
+											label="简写名称"
+											placeholder="GT6、TiC2 这类社区通用缩写"
+											{...text("wSname")}
 										/>
 									</Grid.Col>
 									<Grid.Col span={12}>
@@ -880,7 +917,7 @@ export default function App() {
 									<Grid.Col span={8}>
 										<MultiSelect
 											label="杂项元素"
-											data={["道具", "国创", "物流", "能源", "信息", "魔改", "实用", "辅助"]}
+											data={EXTRA_ELEMENTS}
 											placeholder="可选"
 											clearable
 											{...multi("wExtra")}
