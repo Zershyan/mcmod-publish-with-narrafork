@@ -153,9 +153,13 @@ def main():
             'sha256': digest,
             'status': 'accepted; approval not checked',
             'url': f'https://www.curseforge.com/minecraft/mc-mods/{args.slug}/files/{result["id"]}',
+            'filesUrl': f'https://www.curseforge.com/minecraft/mc-mods/{args.slug}/files',
+            'consoleUrl': f'https://authors.curseforge.com/#/projects/{args.project_id}/files',
         })
         result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
         print(label, '已受理', result['id'], result['url'])
+        print('  文件列表', result['filesUrl'])
+        print('  作者后台', result['consoleUrl'], '（审核中的文件只在这里可见）')
 
 
 if __name__ == '__main__':

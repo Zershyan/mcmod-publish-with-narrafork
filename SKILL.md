@@ -215,6 +215,21 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 ---
 
+## 汇报必须带审核链接
+
+每次发布结束，汇报里都要附上可以点进去看进度的链接，不能让用户自己去找。
+
+| 渠道 | 链接 |
+|---|---|
+| CurseForge 公开文件列表 | `https://www.curseforge.com/minecraft/mc-mods/<slug>/files` |
+| CurseForge 作者后台 | `https://authors.curseforge.com/#/projects/<projectId>/files` |
+| MC百科审核列表 | `https://www.mcmod.cn/verify.html?order=createtime&selfonly=1` |
+
+两点必须说清楚：
+
+- **CurseForge**：审核中的文件不会出现在公开列表里，要从作者后台看。拿到文件 ID 只代表受理，不是过审。
+- **MC百科**：条目在审核列表里能看到状态和退回附言。通过之前，模组页上的资料数量不会变。
+
 ## 什么时候该停下来问
 
 只在这几种情况停，其余自己往下走：

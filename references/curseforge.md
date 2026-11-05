@@ -143,8 +143,17 @@ GET https://www.curseforge.com/api/v1/mods/{projectId}/files?pageIndex=0&pageSiz
 
 HTTP 200 和文件 ID 只代表**上传被受理**。`Processing`、`Baking`、`Under Review` 都不是 Approved。
 
+查状态的地址：
+
+```
+公开文件列表  https://www.curseforge.com/minecraft/mc-mods/<slug>/files
+作者后台      https://authors.curseforge.com/#/projects/<projectId>/files
+```
+
+**审核中的文件不出现在公开列表里**，只能从作者后台看，所以公开列表为空不等于上传失败。
+
 - 400 对照字段错误
 - 401/403 区分权限与网络拦截
-- 响应不明时先查线上文件列表，别重传
+- 响应不明时先查作者后台，别重传
 
 最终汇报文件链接、ID、目标版本、实际状态。不承诺审核耗时。

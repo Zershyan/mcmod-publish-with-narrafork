@@ -174,11 +174,17 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 ## 7. 核对审核
 
+发布完成后，汇报里必须附上下面这些链接：
+
 ```
-审核列表      https://www.mcmod.cn/verify.html?order=createtime&selfonly=1
-已通过再编辑  /item/edit/<资料ID>/
-待审再编辑    /item/add/<模组ID>-<资料ID>/
+CurseForge 公开列表  https://www.curseforge.com/minecraft/mc-mods/<slug>/files
+CurseForge 作者后台  https://authors.curseforge.com/#/projects/<projectId>/files
+MC百科审核列表       https://www.mcmod.cn/verify.html?order=createtime&selfonly=1
+已通过再编辑         /item/edit/<资料ID>/
+待审再编辑           /item/add/<模组ID>-<资料ID>/
 ```
+
+CF 的文件在审核中不会出现在公开列表，要看作者后台。百科条目在审核列表里能看到状态和退回附言。
 
 用户把退回附言贴过来，按资料 ID 定位条目再改。常见退回原因见 [MC百科](mcmod.md#审核)。
 
