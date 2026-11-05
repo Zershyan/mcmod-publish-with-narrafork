@@ -1,14 +1,28 @@
 # 与 zershyan-mcmod-style 同装时
 
+> **本文只适用于同时满足以下两个条件的情况：**
+>
+> 1. 装了 `zershyan-mcmod-style` skill
+> 2. 工程的构建脚本**基本符合**该 skill 的规范 —— `buildAlpha` 任务、`<mod_version>-<mc>+build.<N>` 的版本拼法、`finalizeArtifacts` 任务，三项都要对上
+>
+> **任一条件不满足，本文全部条款都不适用**，按 [字段来源](field-sources.md) 的通用规则处理。不要拿本文的单条规则去套不符合规范的工程。
+
 工程通常同时装了两套 skill：`zershyan-mcmod-style` 管开发和构建，本 skill 管发布。两者对**产物命名**和**资源位置**有约定，发布时必须按工程的实际情况来，不能套用通用假设。
 
-## 怎么判断
+## 先确认这两个条件
 
 ```bash
+# 条件一：skill 装了没
 ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
+
+# 条件二：工程是否符合规范
+grep -cE "buildAlpha|finalizeArtifacts" build.gradle
+grep -E "^version =|baseVersion" build.gradle
 ```
 
-装了才适用本文；没装就按 [字段来源](field-sources.md) 的通用规则走，不要凭这条推断。
+条件一有输出、条件二里 `buildAlpha` 与 `finalizeArtifacts` 都在、`version` 由 `<mod_version>-<minecraft_version>+build.<N>` 拼成 —— 三条都对上才继续往下读。
+
+任何一条对不上，就按 [字段来源](field-sources.md) 的通用规则处理，产物选择以 `build.gradle` 的实际命名为准。
 
 ## 发布前先问版本和分支
 
