@@ -168,7 +168,105 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 ## 资料条目
 
-资料条目是另一套接口和字段（`/item/add/<模组ID>/`），字段与模组条目不同。**尚未完整实测**，需要时先按添加页的 `getEditorData` 重新摸一遍。
+资料条目是另一套页面和字段，地址 `/item/add/<模组ID>/`。结构已摸清，**提交行为尚未实测**。
+
+### 分类
+
+`data-multi-name="item-data"`、`data-multi-id="category"` 的 `a` 元素，`data-multi-value` 取值：
+
+| 值 | 分类 |
+|---|---|
+| 1 | 物品/方块 |
+| 2 | 群系/群落 |
+| 3 | 世界/维度 |
+| 4 | 生物/实体 |
+| 5 | 附魔/魔咒 |
+| 6 | BUFF/DEBUFF |
+| 7 | 多方块结构 |
+| 8 | 自然生成 |
+| 9 | 绑定热键 |
+| 10 | 游戏设定 |
+
+页面上的 `(数字)` 是该项目已有的资料数量，不是分类编号。
+
+### 字段
+
+提交对象是 `item-data`，键名来自控件的 `data-multi-id`：
+
+| 键 | 对应 |
+|---|---|
+| `name` | 主要名称 |
+| `ename` | 次要名称 |
+| `remark` | 改动附言 |
+| `category` | 分类，`{序号: 分类值}` |
+| `type` | 资料类型（`#item-type-select` 或自定义 `#item-type-custom`） |
+| `regname` | 注册名 `modid:path` |
+| `damage` | 最大耐久 |
+| `maxstack` | 最大堆叠 |
+| `oredict` | 矿物词典 |
+| `metadata` | 元数据 |
+| `icon-32x-data` / `icon-128x-data` | 图标 base64 |
+| `cover-data` | 资料封面 |
+| `content` | 正文 HTML |
+| `tools` | 关联工具，可空 |
+
+### 提交
+
+```json
+{
+  "action": "item_add",
+  "edit-id": "<模组ID>",
+  "class-id": "<模组ID>",
+  "redo-id": "0",
+  "captcha": "…",
+  "item-data": { "name": "…", "category": { "0": "1" }, "content": "…" }
+}
+```
+
+端点与模组条目相同（`event.mcmod.cn/action/edit/doEdit/`）。验证码图片的 `id` 是 `item_add_<模组ID>`，取图 URL：
+
+```
+https://www.mcmod.cn/frame/edit/EditCaptcha/?id=item_add_<模组ID>
+```
+
+页面上的提交按钮：`#edit-submit-button`，`data-type="item_add"`、`edit-id="<模组ID>"`、`redo-id="0"`。
+
+### 脚本支持
+
+配置里写 `"kind": "item"` 就走资料条目，验证码 id 自动按 `item_add_<模组ID>` 取：
+
+```bash
+python scripts/mcmod/submit.py docs/mcmod/item-test.json --dry-run
+python scripts/mcmod/submit.py docs/mcmod/item-test.json --captcha-url
+python scripts/mcmod/submit.py docs/mcmod/item-test.json --captcha <字符>
+```
+
+配置示例：
+
+```json
+{
+  "kind": "item",
+  "classId": "3828",
+  "name": "中文名",
+  "ename": "English Name",
+  "category": "物品/方块",
+  "type": "道具",
+  "regname": "modid:path",
+  "maxstack": "64",
+  "damage": "",
+  "content": "<p>[ban:title_menu]</p><p>正文</p>"
+}
+```
+
+`category` 写中文，脚本按 [mcmod-enums.json](../assets/mcmod-enums.json) 的 `itemCategory` 转成数字。
+
+### 还没确认的
+
+- `item-data` 里未列出的键（图标 lock/delete 标记等）在什么场景下需要
+- 提交成功后的返回结构（`state: 0` 是否同样带 `url`）
+- 批量提交时验证码是否每次都要重新取
+
+第一次真提交时先只发一条，确认返回再批量。
 
 ## 审核
 

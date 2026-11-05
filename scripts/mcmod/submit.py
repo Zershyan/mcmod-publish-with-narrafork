@@ -21,13 +21,15 @@ from author import find as find_author
 
 API = 'https://event.mcmod.cn/action/edit/doEdit/'
 ADD_PAGE = 'https://www.mcmod.cn/class/add/'
-CAPTCHA_URL = 'https://www.mcmod.cn/frame/edit/EditCaptcha/?id=class_add_0'
+CAPTCHA_URL = 'https://www.mcmod.cn/frame/edit/EditCaptcha/?id={captcha_id}'
 COOKIE_FILE = ROOT / '.narrafork' / 'mcmod-cookie.txt'
 VERSION_CACHE = ROOT / '.narrafork' / 'mcmod-mcversions.json'
 CAPTCHA_FILE = ROOT / '.narrafork' / 'mcmod-captcha.png'
 ENUMS = json.loads((ROOT / 'assets' / 'mcmod-enums.json').read_text(encoding='utf-8'))
 # 添加页内嵌全部 MC 版本：var arrMCVer = $.parseJSON('[{"id":"78","name":"26.1.2"},…]')
 MC_VERSION_PATTERN = re.compile(r"arrMCVer\s*=\s*\$\.parseJSON\('(\[.*?\])'\)", re.S)
+# 资料条目里直接取值的字段
+ITEM_FIELDS = ('name', 'ename', 'remark', 'regname', 'damage', 'maxstack', 'oredict', 'metadata', 'content')
 
 
 def make_session():
@@ -57,10 +59,11 @@ def cached_mc_versions(session, refresh: bool = False) -> dict[str, str]:
     return versions
 
 
-def grab_captcha(session) -> Path:
+def grab_captcha(session, captcha_id: str = 'class_add_0') -> Path:
     """取一张新的验证码图片。每次请求都会刷新，取完必须紧接着提交。"""
     session.get(ADD_PAGE, timeout=30)
-    response = session.get(CAPTCHA_URL, timeout=30, headers={'Referer': ADD_PAGE})
+    response = session.get(CAPTCHA_URL.format(captcha_id=captcha_id), timeout=30,
+                           headers={'Referer': ADD_PAGE})
     if response.status_code >= 400 or not response.content:
         raise SystemExit(f'取验证码失败：HTTP {response.status_code}')
     CAPTCHA_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -173,6 +176,32 @@ def build(cfg: dict, mc_ids: dict[str, str]) -> dict:
     }
 
 
+def build_item(cfg: dict) -> dict:
+    """资料条目：字段落在 item-data 下，edit-id 与 class-id 都是模组 ID。"""
+    category = cfg.get('category', '物品/方块')
+    code = category if category in ENUMS['itemCategory'] else code_of('itemCategory', category)
+    module_id = str(cfg.get('classId') or cfg.get('moduleId') or '')
+    if not module_id:
+        raise SystemExit('资料条目需要 classId（模组 ID）')
+
+    data = {key: str(cfg.get(key, '')) for key in ITEM_FIELDS}
+    data['category'] = indexed([code])
+    if cfg.get('type'):
+        data['type'] = cfg['type']
+    if cfg.get('icon32'):
+        data['icon-32x-data'] = cfg['icon32']
+    if cfg.get('icon128'):
+        data['icon-128x-data'] = cfg['icon128']
+
+    return {
+        'action': cfg.get('action', 'item_add'),
+        'edit-id': module_id,
+        'class-id': module_id,
+        'redo-id': str(cfg.get('redoId', '0')),
+        'item-data': data,
+    }
+
+
 def submit(session, payload: dict) -> dict:
     response = session.post(
         API,
@@ -196,16 +225,23 @@ def main():
 
     cfg = json.loads(Path(args.config).read_text(encoding='utf-8'))
     session = make_session()
+    kind = cfg.get('kind', 'class')
+    captcha_id = (f"item_add_{cfg.get('classId') or cfg.get('moduleId') or ''}"
+                  if kind == 'item' else 'class_add_0')
 
     if args.captcha_url:
-        # 取图时会重新加载添加页，版本映射一并刷新并缓存
-        cached_mc_versions(session, refresh=True)
-        grab_captcha(session)
+        if kind != 'item':
+            # 取图时会重新加载添加页，版本映射一并刷新并缓存
+            cached_mc_versions(session, refresh=True)
+        grab_captcha(session, captcha_id)
         print('把图片给用户识别，拿到验证码后带 --captcha 重跑，中间不要再请求添加页')
         return
 
-    # 走缓存，避免提交前请求添加页把验证码刷掉
-    payload = build(cfg, cached_mc_versions(session))
+    if kind == 'item':
+        payload = build_item(cfg)
+    else:
+        # 走缓存，避免提交前请求添加页把验证码刷掉
+        payload = build(cfg, cached_mc_versions(session))
     if args.captcha:
         payload['captcha'] = args.captcha
     print(json.dumps(payload, ensure_ascii=False, indent=1))
