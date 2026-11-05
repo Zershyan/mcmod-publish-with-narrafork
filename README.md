@@ -12,6 +12,7 @@
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、审核 |
 | [字段来源](references/field-sources.md) | 每个字段从哪取 |
 | [踩坑记录](references/pitfalls.md) | 症状、原因、正确做法 |
+| [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md) | 两套 skill 同时安装时的产物、版本与资源约定 |
 
 ## 目录
 

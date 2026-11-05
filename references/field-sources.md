@@ -18,16 +18,7 @@
 | 简介 | `gradle.properties` → `mod_description` |
 | JAR 名 | `base { archivesName }`，没配时用工程目录名 |
 
-**工程装了 `zershyan-mcmod-style` 时，发布只用文件名不带 `+build.N` 的 jar。**
-
-那个规范里 `buildAlpha` 的产物名是 `<modid>-<mod_version>-<mc_version>+build.<N>.jar`，属于带编号的测试构建；普通 `build` 产出的是 `<modid>-<mod_version>-<mc_version>.jar`，不带编号。包内版本两者都带编号，只有文件名不同。
-
-所以 `build/libs` 里同时存在两种包时：
-
-- 有不带编号的 → 用那个
-- 只有带编号的 → 说明还没跑过普通 `build`，先构建再发，不要拿 alpha 包顶替
-
-没装那个 skill 的工程按 `build.gradle` 的实际命名判断，不要套用这条。
+装了 `zershyan-mcmod-style` 的工程，发布只用文件名不带 `+build.N` 的 jar，细节见 [与 zershyan-mcmod-style 同装时](with-mcmod-style.md)。没装的按 `build.gradle` 实际命名判断。
 
 **版本号不要拼**。有的工程是 `${mod_version}-${minecraft_version}+build.${n}`，有的直接 `version = mod_version`，多分支工程甚至每个分支都不一样。逐个分支读 `build.gradle`。
 

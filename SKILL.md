@@ -63,7 +63,13 @@ ls src/main/resources/logo.png
 
 要拿到：modid、英文名、版本号、MC 版本、加载器、Java 版本、许可证、作者、简介、JAR 路径规则、语言文件位置。
 
-**如果工程装了 `zershyan-mcmod-style`**：发布只用文件名不带 `+build.N` 的 jar，带编号的是 `buildAlpha` 测试产物。同时存在两种时选不带编号的；只剩带编号的说明还没跑普通 `build`，先构建，不要拿 alpha 包顶替。详见 [字段来源](references/field-sources.md#工程事实)。
+**先判断工程装没装 `zershyan-mcmod-style`**：
+
+```bash
+ls ~/.agents/skills/zershyan-mcmod-style/ 2>/dev/null && echo 已安装
+```
+
+装了的话，产物选择和版本语义要按它的约定来（最关键一条：**只发文件名不带 `+build.N` 的 jar**），完整差异见 [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md)。没装就按通用规则走。
 
 多分支工程**逐个分支读**，版本号规则可能不一样。
 
@@ -254,6 +260,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 | [MC百科](references/mcmod.md) | 登录、提交接口、字段结构、枚举、审核 |
 | [字段来源](references/field-sources.md) | 某个字段该从哪取 |
 | [踩坑记录](references/pitfalls.md) | 报错或行为不符预期时先查这里 |
+| [与 zershyan-mcmod-style 同装时](references/with-mcmod-style.md) | 工程装了两套 skill 时的产物、版本与资源约定 |
 | [form-full](assets/form-full/README.md) | 首次发布的完整表单怎么用 |
 | [form-release](assets/form-release/README.md) | 只发新版本的简化表单怎么用 |
 | [form-confirm](assets/form-confirm/README.md) | 提交前确认表单怎么用 |
