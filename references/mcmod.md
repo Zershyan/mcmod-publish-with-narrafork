@@ -17,16 +17,29 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --dry-run
 ### 2. 让 MCP 看看浏览器里还登着没
 
 ```
-goto https://www.mcmod.cn/
+goto https://center.mcmod.cn/
 ```
 
-页头有用户名 = 登录状态还在，直接读 cookie：
+**开 `center` 而不是 `www`**：`www` 的页面状态常和登录态对不上，页头没用户名不等于没登录。`center` 登录着会自动跳转，回查地址就能确定：
+
+```
+get url
+```
+
+- 变成 `https://center.mcmod.cn/<user_id>` → 登录着
+- 停在登录页 → 没登录，往下走
+
+地址里那个数字**不是作者 ID**，别拿去搜作者；搜索框只认名字，见后文「作者」。
+
+登录着就读 cookie：
 
 ```js
 document.cookie
 ```
 
-把结果写进 `.narrafork/mcmod-cookie.txt`，回第 1 步。没登录就往下走。
+把结果写进 `.narrafork/mcmod-cookie.txt`，回第 1 步。
+
+**别把「没登录」读成「读不到」**：未登录时 `document.cookie` 里本来就没有 `*_auth`，请求头里也没有凭证，那是状态问题；工具能不能读是另一回事。先按第 3 步登录回来再看，不要凭这一次空结果去让用户手动粘贴。
 
 ### 3. 有 `Browser` 工具：开个窗口让用户登录
 
@@ -54,7 +67,7 @@ python scripts/mcmod/console.py docs/mcmod/mod-config.json
 
 | 优点 | 限制 |
 |---|---|
-| 不经过本地，绕开 httpOnly 问题 | 一次只能在当前页面处理，切页要重跑 |
+| 不经过本地，不用把 cookie 交出来 | 一次只能在当前页面处理，切页要重跑 |
 | 页面控件用它们自己的 API 填，不会失效 | 结果只在控制台里，拿不到结构化文件 |
 | 验证码由用户在页面上填，无需额外交互 | 页面改版时模板要跟着改 |
 

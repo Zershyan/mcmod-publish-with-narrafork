@@ -205,7 +205,7 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 | 步骤 | 情况 | 做法 |
 |---|---|---|
 | 1 | 手上有 cookie 文件 | `submit.py --dry-run` 能打印 JSON 就有效，直接提交，结束 |
-| 2 | 过期了 | browsermcp 打开百科看页头有没有用户名；在就 `eval "document.cookie"` 存进文件，回 1 |
+| 2 | 过期了 | browsermcp 开 `center.mcmod.cn`（不是 `www`，状态对不上）：地址跳成 `center.mcmod.cn/<user_id>` 就是登录着，`eval "document.cookie"` 存进文件，回 1 |
 | 3 | MCP 里也没登录 | 有 `Browser` 工具就开窗口让用户登录，`cookies.py dump` 后回 1；没有就往下 |
 | 4 | 都没有 | 交互式提问二选一：**A** 用户 F12 执行 `copy(document.cookie)` 贴给你；**B** 给控制台脚本 + 添加页链接，他自己粘贴提交 |
 

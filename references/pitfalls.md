@@ -44,6 +44,20 @@
 
 **做法**：上传前先写 `upload-attempt-<版本>.json`，成功后写 `upload-result-<版本>.json`。有 attempt 没 result 就拒绝重传，要求先核对线上。
 
+### 把「这次没登录」当成「工具读不到」
+
+**症状**：`eval document.cookie` 只回 5–6 项、`request` 里的 `cookie:` 也只有那几项，于是断定这套工具拿不到完整登录态，跳过浏览器直接让用户手动粘贴。
+
+**原因**：三条依据被串成了一个结论——
+
+- 文档写「httpOnly 读不到」，说的是 **`document.cookie` 这个接口**受限，不是工具整体受限
+- 一次 `eval` 结果少，验证的只是文档那句话，不是工具的能力上限
+- `request` 里没有凭证，多半是**当时页面根本没登录**（页头无用户名、`loggedIn: false`），属状态问题
+
+把「接口限制」+「一次失败样本」当成「工具不行」，就会漏掉 `requests`、`snapshot`、CDP 这些还在手上的路子。
+
+**做法**：**先分状态，再谈能力**。看页头有没有用户名、`document.cookie` 里有没有 `*_auth`，确认登录着再判断；仍不行就换读法（`document.cookie` → 浏览器 store → `cookies.py` 的 CDP），而不是用一个样本给工具下结论。
+
 ## CurseForge
 
 ### 有 MCP 却让人手填建项目表单
@@ -141,6 +155,14 @@
 **原因**：用户中心 ID（`center.mcmod.cn/<ID>/`）不是作者 ID，两者不同。搜索框只认名字。
 
 **做法**：用名字搜，从结果行取 `data-id`，那个才是提交用的作者 ID。
+
+### 拿 `www` 的页头判断登录态
+
+**症状**：打开 `https://www.mcmod.cn/` 页头没看到用户名，判定没登录，转去让用户登录或手动粘贴 cookie。
+
+**原因**：`www` 那边的页面状态常和登录态对不上，页头干净不代表没登录。
+
+**做法**：改开 `https://center.mcmod.cn/`，登录着会自动跳到 `https://center.mcmod.cn/<user_id>`，看地址就能定。登着再读 `document.cookie`。地址里那个数字不是作者 ID，别拿去用。
 
 ### 拿到的 cookie 用不了
 
