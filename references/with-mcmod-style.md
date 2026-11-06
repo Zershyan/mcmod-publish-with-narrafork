@@ -48,7 +48,7 @@ git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 
 发布流程里只跑 `build`。构建失败就如实报告并停下，不要改用 `buildAlpha` 换个路子绕过。
 
-勾了「回填至项目」时，构建前先执行 `python scripts/project/version.py <branch>=<version> ...`。
+勾了「回填至项目」时，第 1 步先执行 `python scripts/project/version.py <branch>=<version> ...`，构建留到第 5 步——那时图标已定稿，才会被打进包。
 
 ## 产物：禁止使用带构建编号的 jar
 

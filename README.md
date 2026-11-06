@@ -14,7 +14,7 @@ python scripts/preflight.py
 
 | 文档 | 内容 |
 |---|---|
-| [SKILL.md](SKILL.md) | 执行手册：开局一条命令，然后七步走完 |
+| [SKILL.md](SKILL.md) | 执行手册：开局一条命令，然后八步走完 |
 | [总流程图](references/flow.md) | 一张图看懂整体走向与三处阻塞点 |
 | [产物与数据流](references/workflow.md) | 每一步留下什么文件、下一步读什么 |
 | [CurseForge](references/curseforge.md) | 令牌、建项目、上传、依赖、状态语义 |
@@ -29,6 +29,8 @@ python scripts/preflight.py
 SKILL.md
 references/          流程与平台细节
 assets/
+  flow.html          流程图源文件，改完按文件头注释重新截图成 flow.png
+  flow.png           总流程图
   forms/             四个 GenUI 表单模板，用途见其 README
   mcmod-enums.json   百科提交的枚举对照
   content-templates.md  百科正文模板

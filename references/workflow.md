@@ -6,7 +6,7 @@
 
 | 文件 | 谁产生 | 谁使用 | 内容 |
 |---|---|---|---|
-| `curseforge/project.json` | 建项目后写入，或从用户给的项目页抄 | 第 3–5 步 | `projectId`、`slug` |
+| `curseforge/project.json` | 建项目后写入，或从用户给的项目页抄 | 第 3–6 步 | `projectId`、`slug` |
 | `curseforge/game-versions.json` | `upload.py query` | `make_manifest` / `upload` | 版本名、ID、`gameVersionTypeID` |
 | `curseforge/release-manifest.json` | `make_manifest.py` | `upload.py` | 每个「MC 版本 × 加载器」一条 |
 | `curseforge/upload-result-<版本>.json` | `upload.py` | 去重、汇报 | 文件 ID 与链接 |
@@ -21,6 +21,7 @@
 | `.narrafork/mcmod-mcversions.json` | `submit.py` | 提交时用（避免刷新验证码） | 版本名 → 版本 ID |
 | `.narrafork/mcmod-captcha.png` / `-4x.png` | `submit.py --captcha-url` | 用户识别 | 验证码原图与放大图 |
 | `.narrafork/icon-style.json` | 图标面板「保存为默认」 | `make_icon.py` | 占位图标样式 |
+| `src/main/resources/logo.png` | `make_icon.py` | `./gradlew build`、建项目上传图标 | 占位图标 |
 | `.narrafork/gen_ui/<名称>/` | 复制模板 + 改 `data.ts` | GenUI `render` | `App.tsx` + `data.ts` |
 | `.narrafork/gen_ui/publish/payload.json` | 表单提交结果还原 | `make_manifest.py` | 用户填过的配置 |
 
@@ -30,10 +31,12 @@
 preflight.py
    └─ 工程事实 → 填进 data.ts 的 defaults
 
-FormBuild ──► 分支 + mod_version ──► version.py ──► ./gradlew build ──► build/libs/*.jar
+FormBuild ──► 分支 + mod_version ──► version.py ──► gradle.properties
 
-FormFull ──► payload.json ──► make_manifest.py ──► release-manifest.json
-                        └──► mod-config.json
+FormFull ──► payload.json ──┬─► make_icon.py ──► logo.png
+                            └─► mod-config.json
+
+logo.png 定稿 ──► ./gradlew build ──► build/libs/*.jar ──► make_manifest.py ──► release-manifest.json
 
 FormConfirm ──► 用户确认 ──┬─► create_project.py ──► project.json
                           ├─► set_links.py
@@ -51,6 +54,7 @@ console.py / submit.py ──► 百科条目 ──► entries.json
 | 建项目脚本停在某一步 | 页面停在当前步骤 | 处理完页面提示再执行一次，从当前步骤继续 |
 | 百科验证码过期 | 无 | 重新 `--captcha-url` 取图 |
 | 回填版本号失败 | 已改的分支（多分支时每改完一个就提交） | 看输出定位卡在哪个分支 |
+| 构建失败 | 无新产物，`payload.json` 已经存好 | 修好后重跑 `./gradlew build`，表单不用重填 |
 
 ## 百科已有条目时改什么
 

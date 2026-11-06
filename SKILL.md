@@ -27,14 +27,14 @@ python scripts/preflight.py
 
 表单的两个细节：**`show` 不支持 `wait`**，画完就能接着跑，流程里不用；没有 GenUI 时不要停，有交互式提问就按字段分组问（每次不超过 4 项），没有就用普通消息把问题列成清单——这条让 skill 不依赖 NarraFork 也能跑完。
 
-## 第 1 步：版本与构建
+## 第 1 步：版本
 
-**构建是必做的**，区别只在于要不要先问版本：
+**这一步只问版本并回填，不构建**——图标要到第 4 步才可能生成，先构建出来的 jar 里就没有它。构建在第 5 步。
 
 | preflight 结果 | 做什么 |
 |---|---|
-| 构建规范「符合」 | 用 `FormBuild` 问分支与 `mod_version` → 勾了回填就 `version.py` → 逐分支 `./gradlew build` |
-| 不符合 | 直接 `./gradlew build`，版本号沿用 `build.gradle` 里的值，不用问 |
+| 构建规范「符合」 | 用 `FormBuild` 问分支与 `mod_version` → 勾了回填就 `version.py` |
+| 不符合 | 不用问：版本号沿用 `build.gradle` 里的值 |
 
 ```bash
 git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
@@ -60,12 +60,6 @@ python scripts/project/version.py main=0.0.1 1.20.1=0.0.1 --commit
 
 **多分支必须加 `--commit`**：git 不允许带着未提交的 `gradle.properties` 切分支。版本已经是目标值的分支会自动跳过，不产生空提交。
 
-### 两种情况都要：跑构建
-
-- **自己跑 `./gradlew build`**，绝不跑 `buildAlpha`（后者递增编号并回写属性，属开发动作）
-- 构建失败就如实报告停下，不要改用 `buildAlpha` 绕过
-- 多分支工程逐个分支构建，`mod_version` 与 `minecraft_version` 可能不一样
-
 ## 第 2 步：项目存不存在
 
 ```bash
@@ -76,12 +70,12 @@ cat curseforge/project.json 2>/dev/null || echo "无记录"
 |---|---|
 | 有记录 | 直接用里面的 `projectId` / `slug`，跳到第 3 步 |
 | 无记录 | 问用户「这个模组在 CurseForge 上有现成项目吗？」 |
-| 用户说没有 | **记成「待建」，先不动手**，项目名/分类/许可证由第 4 步表单收集，第 5 步确认后再建 |
+| 用户说没有 | **记成「待建」，先不动手**，项目名/分类/许可证由第 4 步表单收集，第 6 步确认后再建 |
 | 用户说有 | 要项目页地址：从地址取 slug，从页面抄 Project ID，写进 `project.json` |
 
 **不要自己去 CurseForge 搜项目**，公开页有 Cloudflare 人机校验。
 
-建项目是唯一不可逆的动作，所以它排在第 5 步 `FormConfirm` 之后——用户确认清单时才一并授权。
+建项目是唯一不可逆的动作，所以它排在第 6 步 `FormConfirm` 之后——用户确认清单时才一并授权。
 
 ## 第 3 步：版本标签
 
@@ -99,7 +93,7 @@ python scripts/cf/upload.py query curseforge
 mkdir -p .narrafork/gen_ui/publish
 cp assets/forms/FormFull.tsx .narrafork/gen_ui/publish/App.tsx
 cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/publish/data.ts
-# 改 data.ts：defaults 填第 1 步的事实作为 placeholder，versions 填版本条目
+# 改 data.ts：defaults 填 preflight 的工程事实作为 placeholder，versions 填版本条目
 # GenUI render({path: '.narrafork/gen_ui/publish', wait: true})
 ```
 
@@ -132,11 +126,21 @@ python scripts/project/make_icon.py <模组英文名> --out src/main/resources/l
 
 样式文件会被自动读取；要临时覆盖就加 `--font georgiab.ttf --font-size 56 --fg "#3b1f0e"` 这类参数，加 `--save-style` 则一并写回配置。多行用 `--lines "Forge|Attachment"`。
 
-### 提交结果怎么变成清单
+**图标必须在构建之前定稿**：第 5 步的 `./gradlew build` 会把它打进包，构建之后再生成，包里就没有它。
+
+### 提交结果怎么还原
 
 表单返回 `{"payload": "<JSON 字符串>"}`，还原后存成 `.narrafork/gen_ui/publish/payload.json`。
 
 里面 `changed` **只装用户改过的字段**，没改的沿用 `data.ts` 里的默认值——把两者合并成完整配置再往下走。不整份回传是因为工具显示层会截断长内容，几千字的描述一塞进去，后面的字段就看不见了。
+
+清单要等第 5 步构建完才出得来，`make_manifest.py` 要用真实的 jar 算 sha256。
+
+## 第 5 步：构建，然后出清单
+
+- **自己跑 `./gradlew build`**，绝不跑 `buildAlpha`（后者递增编号并回写属性，属开发动作）
+- 构建失败就如实报告停下，不要改用 `buildAlpha` 绕过；表单结果已经落在 `payload.json` 里，修好接着跑，不用重填
+- 多分支工程逐个分支构建，`mod_version` 与 `minecraft_version` 可能不一样
 
 ```bash
 python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \
@@ -147,7 +151,7 @@ python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \
 
 每个 `changelog` 必须中英双语（英文块 + `---` + 中文块），脚本会校验，只有单语直接报错。项目描述同理，`create_project.py` 也会拦。
 
-## 第 5 步：确认，然后建项目、上传
+## 第 6 步：确认，然后建项目、上传
 
 **先过 `FormConfirm`**——它是整个流程唯一的确认点。清单里要有项目名、分类、许可证、项目是否待建、每个要上传的文件：
 
@@ -188,15 +192,15 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 **返回文件 ID 只代表受理，不是过审。**汇报时说「已受理」，不要承诺审核耗时。
 
-## 第 6 步：MC百科（表单里 `wiki` 为 true 才做）
+## 第 7 步：MC百科（表单里 `wiki` 为 true 才做）
 
-看第 4 步表单结果的 `payload.wiki`：`true` 就走这段，`false` 直接跳到第 7 步。
+看第 4 步表单结果的 `payload.wiki`：`true` 就走这段，`false` 直接跳到第 8 步。
 
 **不要再问一遍要不要发百科**——那个开关就是用户的选择，和第 2 步问「有没有现成 CF 项目」是两回事，不要在同一轮一起问。
 
-### 6.1 先弄到一份能用的 cookie
+### 7.1 先弄到一份能用的 cookie
 
-本地脚本优先，所以整条链路的目标就是拿到 cookie。**四步，任何一步拿到就回到第 1 步。**
+本地脚本优先，所以整条链路的目标就是拿到 cookie。**四步，任何一步拿到就回到表格第一行重试。**
 
 | 步骤 | 情况 | 做法 |
 |---|---|---|
@@ -209,11 +213,11 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 **任何修改也一样**：改已有条目、补资料、处理退回，都先走本地脚本（`submit.py` 带 `redo-id`）。
 
-### 6.2 有没有现成条目
+### 7.2 有没有现成条目
 
 问用户或看他给的项目地址。已有条目**先对比差异**再改，不要整条重提。
 
-### 6.3 提交（要验证码）
+### 7.3 提交（要验证码）
 
 **有 cookie 时**走 `submit.py` 本地提交：
 
@@ -235,11 +239,11 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 **封面**：两条路径都给 `coverPath` 就行。`submit.py` 会按 16:10 居中裁切、缩放到 480×300 后写进隐藏字段 `cover-data`；控制台脚本则在页面里注入文件输入框并自动确认裁剪。原图比例不对也不会变形。
 
-### 6.4 资料条目（可选）
+### 7.4 资料条目（可选）
 
 配置写 `"kind": "item"`，验证码换成 `item_add_<模组ID>`。改已有资料带 `redo-id=<资料ID>`，会**替换**而不是新建。字段与正文见 [mcmod](references/mcmod.md#资料条目)、[正文模板](assets/content-templates.md)。
 
-## 第 7 步：处理审核退回
+## 第 8 步：处理审核退回
 
 用户把退回附言贴过来，按资料 ID 找到条目再改：已通过的走 `/item/edit/<资料ID>/`，待审的走 `/item/add/<模组ID>-<资料ID>/`。
 
@@ -263,6 +267,7 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 只有这几种情况停，其余自己往下走：
 
 - preflight 里的 ✗ 补不上（令牌、依赖、cookie）
+- 构建失败（如实报告失败本身，不要换 `buildAlpha` 绕过）
 - 工程里读不到的四类信息：中文名、CF 分类、百科模组元素、百科作者名（能放进表单的一律放进表单问）
 - 需要验证码或登录凭据
 - 线上已有同名条目但内容不同

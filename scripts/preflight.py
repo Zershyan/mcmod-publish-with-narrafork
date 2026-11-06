@@ -149,9 +149,7 @@ def next_steps(project: dict, env: dict) -> list:
     if not project['isModProject']:
         return ['当前目录不是模组工程，先切到工程根目录再跑一次']
     if project['matchesStyleSkill']:
-        steps.append('用 FormBuild 表单问分支与 mod_version，然后逐分支跑 ./gradlew build')
-    else:
-        steps.append('直接跑 ./gradlew build（不带 buildAlpha 的工程按实际产物命名）')
+        steps.append('用 FormBuild 表单问分支与 mod_version，勾了回填就跑 version.py')
     if not env['token']:
         steps.append('提醒用户设置 CURSEFORGE_API_TOKEN')
     if not env['pylibs']:
@@ -162,6 +160,7 @@ def next_steps(project: dict, env: dict) -> list:
         steps.append('确认 CF 上有没有现成项目；没有就按 references/curseforge.md#项目创建 建一个')
     else:
         steps.append('读 curseforge/project.json 拿 projectId / slug')
+    steps.append('出配置表单收集信息，图标定稿后再逐分支跑 ./gradlew build')
     if not env['cookie']:
         steps.append('发百科前先取 cookie，见 references/mcmod.md')
     return steps
@@ -206,9 +205,9 @@ def main():
     if project['uploadableJars']:
         print(f"可上传    {', '.join(project['uploadableJars'])}")
     elif project['excludedJars']:
-        print('可上传    没有：现存 jar 都带 +build.N 或是附属包，先跑 ./gradlew build')
+        print('可上传    没有：现存 jar 都带 +build.N 或是附属包，等图标定稿再跑 ./gradlew build')
     else:
-        print('可上传    没有：还没构建，先跑 ./gradlew build')
+        print('可上传    没有：还没构建，等图标定稿再跑 ./gradlew build')
     if project['excludedJars']:
         print(f"不上传    {len(project['excludedJars'])} 个（带编号或附属包）")
     print()

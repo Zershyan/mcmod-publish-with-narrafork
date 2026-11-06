@@ -14,7 +14,7 @@ cp assets/forms/FormFull.data.example.ts .narrafork/gen_ui/<名称>/data.ts
 
 | 文件 | 用途 | 何时用 |
 |---|---|---|
-| `FormBuild.tsx` | 逐行填「分支 + 版本号」，可选回填 | 装了 `zershyan-mcmod-style`，发布流程的**第一步** |
+| `FormBuild.tsx` | 逐行填「分支 + 版本号」，可选回填 | 装了 `zershyan-mcmod-style`，发布流程的**第一步**（只回填版本，不构建） |
 | `FormFull.tsx` | CurseForge 与百科的全部字段 | 第一次发布 |
 | `FormRelease.tsx` | 只填 JAR、版本号、更新说明 | 已有项目发新版本 |
 | `FormConfirm.tsx` | 把将要上传/提交的内容整块摆出来确认 | 上传或提交前的最后一道门 |
@@ -45,7 +45,7 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 脚本会检查工作区干净、逐分支改完回到原分支，**只改文件不提交**。
 
-之后 agent 自己在各分支跑 `./gradlew build`，用产出的正式包继续。
+构建不在这里做：等 `FormFull` 的图标定稿之后，agent 再逐分支跑 `./gradlew build`，用产出的正式包继续。反过来先构建，包里就不会有后来生成的图标。
 
 **只跑 `build`，不跑 `buildAlpha`**：前者沿用已记录编号、不改工程状态；后者会递增 `mod_build_number` 并回写 `gradle.properties`，属于开发动作。构建失败如实报告，不要改用 `buildAlpha` 绕过。
 
@@ -59,7 +59,7 @@ python scripts/project/version.py master=0.0.1 1.21.1=1.0.0
 
 预览用 DOM + CSS 排版（flex 垂直居中、`lineHeight` 控行距、`letterSpacing` 控字距），和最终 PNG 的排版参数一一对应。
 
-提交结果里是 `cfAutoIcon` 与 `cfIconStyle`；点「保存为默认」会把样式以消息发给 agent，agent 用 `scripts/project/save_icon_style.py` 存进 skill 的 `.narrafork/icon-style.json`，下次换模组直接复用。生成用 `scripts/project/make_icon.py`。
+提交结果里是 `cfAutoIcon` 与 `cfIconStyle`；点「保存为默认」会把样式以消息发给 agent，agent 用 `scripts/project/save_icon_style.py` 存进 skill 的 `.narrafork/icon-style.json`，下次换模组直接复用。生成用 `scripts/project/make_icon.py`。图标要在出清单前定稿——构建会把它打进包。
 
 `versions[].modVersion` 填 `gradle.properties` 里的 `mod_version`（如 `0.0.1`），**不要填 Gradle `version`**，也不带 MC 版本与 `+build.N`。发布时的显示名由 `make_manifest.py` 按 jar 文件名生成。
 
