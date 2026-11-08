@@ -247,6 +247,8 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 用户把退回附言贴过来，按资料 ID 找到条目再改：已通过的走 `/item/edit/<资料ID>/`，待审的走 `/item/add/<模组ID>-<资料ID>/`。
 
+改**模组条目**本身用 `scripts/mcmod/edit.py --class-id <模组ID> --payload <class-data.json>`：`--content-file` 换正文，`--dry-run` 先核对提交体。资料条目仍走 `submit.py` 带 `redo-id`。
+
 常见的退回原因见 [mcmod](references/mcmod.md#审核)。审核列表链接见下一节。
 
 ## 汇报必须带三条链接

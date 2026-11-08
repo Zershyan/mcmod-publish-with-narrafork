@@ -102,6 +102,19 @@ data=<URL 编码的 JSON>
 {"state": 122}  未登录
 ```
 
+### 编辑已有条目
+
+改已上架的模组条目用 `scripts/mcmod/edit.py`：
+
+```bash
+python scripts/mcmod/edit.py --class-id <模组ID> --payload class-data.json
+python scripts/mcmod/edit.py --class-id <模组ID> --payload class-data.json --content-file new.html
+```
+
+payload 可以是整份提交体，也可以只是 `class-data`——后者脚本会补上 `action` / `edit-id` / `class-id` / `redo-id`。**这几项少了，服务端不知道改哪条**，提交体里只剩一个 `class-data` 是发不出去的。
+
+`--dry-run` 先看提交体，`--draft` 存草稿（`doSave` 的参数取自页面，未端到端实测）。`state` 非 0 时提交体没被消费，改完可以直接重跑。
+
 ## 封面
 
 页面上的「上传封面」是文件输入框，裁剪确认后结果写进隐藏字段 `[data-multi-id=cover-data]`，值是 `data:image/png;base64,…`。**两条路径都能带封面**：
