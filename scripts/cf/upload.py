@@ -164,6 +164,8 @@ def main():
     for release in manifest['files']:
         label = release['minecraft']
         metadata = dict(release['metadata'])
+        if not (metadata.get('relations') or {}).get('projects'):
+            metadata.pop('relations', None)
         metadata['gameVersions'] = resolve_version_ids(
             metadata.get('gameVersions', []), by_name, groups)
         display_name = metadata.get('displayName', '')

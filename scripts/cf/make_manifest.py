@@ -94,6 +94,7 @@ def resolve_artifact(prefix: str, version: str, minecraft: str, style: bool) -> 
 def build_files(versions: list, dependencies: list) -> tuple[list, list]:
     prefix = jar_prefix()
     style = detect_style()
+    relations = collect_relations(dependencies)
     libs = Path('build/libs')
     available = sorted(p.name for p in libs.glob('*.jar')) if libs.is_dir() else []
     files, problems = [], []
@@ -110,18 +111,20 @@ def build_files(versions: list, dependencies: list) -> tuple[list, list]:
                     continue
                 game_versions = [minecraft, loader, version.get('javaVersion')]
                 game_versions += SIDES.get(version.get('env', '双端'), ['Client', 'Server'])
+                metadata = {
+                    'changelog': changelog,
+                    'changelogType': 'markdown',
+                    'displayName': artifact.stem,
+                    'releaseType': version.get('releaseType') or 'release',
+                    'gameVersions': [v for v in game_versions if v],
+                }
+                if relations:
+                    metadata['relations'] = relations
                 files.append({
                     'minecraft': minecraft,
                     'artifact': str(artifact).replace('\\', '/'),
                     'sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
-                    'metadata': {
-                        'changelog': changelog,
-                        'changelogType': 'markdown',
-                        'displayName': artifact.stem,
-                        'releaseType': version.get('releaseType') or 'release',
-                        'gameVersions': [v for v in game_versions if v],
-                        'relations': collect_relations(dependencies),
-                    },
+                    'metadata': metadata,
                 })
     return files, problems
 

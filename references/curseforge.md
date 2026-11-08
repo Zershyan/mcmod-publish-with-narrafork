@@ -234,6 +234,7 @@ python scripts/cf/upload.py list curseforge --project-id <ID>
 - `artifact` 上传前校验 sha256
 - 一个 JAR 只对应一组「MC 版本 + 加载器」，多个组合要拆成多条
 - `relations.projects[].type` 常用 `requiredDependency`、`optionalDependency`、`incompatible`
+- **`relations` 要么有内容，要么整个字段不出现**。没有依赖就别写 `"relations": {}` 或 `"projects": []`，空壳传上去会被接口当无效数据。`make_manifest.py` 只在该有内容时才加这个字段，`upload.py` 上传前也会把空壳摘掉
 
 三层去重，命中任一层就跳过：
 

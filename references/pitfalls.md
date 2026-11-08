@@ -124,6 +124,14 @@
 
 **做法**：按 `curse.maven:` 坐标提取项目 ID；`jarJar` 和 `localRuntime` 不声明。
 
+### 没有依赖却传了空 `relations`
+
+**症状**：上传 body 里带着 `"relations": {}` 或 `"relations": {"projects": []}`，被接口当无效数据。
+
+**原因**：metadata 里无条件塞了这个字段，没依赖时就成了空壳。
+
+**做法**：**要么有内容，要么字段不存在**。`make_manifest.py` 只在真有依赖时才加 `relations`，`upload.py` 上传前会再摘一次空壳——手写或历史 manifest 带下来的也能兜住。
+
 ## MC百科
 
 ### tagsinput 直接改 `value` 不生效
