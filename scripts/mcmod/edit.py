@@ -1,11 +1,14 @@
 """编辑 MC 百科已有的模组条目。
 
 用法：
-    python edit.py --class-id 30945 --payload class-data.json
-    python edit.py --class-id 30945 --payload class-data.json --content-file new.html
-    python edit.py --class-id 30945 --payload class-data.json --dry-run
+    python edit.py --class-id 30945 --payload payload.json
+    python edit.py --class-id 30945 --payload payload.json --content-file new.html
+    python edit.py --class-id 30945 --payload payload.json --dry-run
 
-payload 可以是整份提交体（带 class-data），也可以只是 class-data；
+payload 怎么来：登录后打开 https://www.mcmod.cn/class/edit/<模组ID>/，控制台执行
+    JSON.stringify(getEditorData())
+得到的整份对象存成文件直接传（里面已经带 action / edit-id / class-id / redo-id）。
+手上只有 class-data 时，补 --redo-id（编辑页地址 /class/edit/<模组ID>-<redo-id>/ 的后半段）。
 --content-file 覆盖 class-data.content。
 cookie 默认读当前目录的 .narrafork/mcmod-cookie.txt，内容是浏览器里的 document.cookie 原文。
 """
@@ -37,17 +40,24 @@ def ssl_context():
         return ssl.create_default_context()
 
 
-def load_payload(path: str, class_id: str) -> dict:
-    """补齐外层字段：doEdit 靠 action / class-id / edit-id / redo-id 定位条目。"""
+def load_payload(path: str, class_id: str, redo_id: str | None) -> dict:
+    """整份 getEditorData() 导出原样用；裸 class-data 得给 redo-id，否则定位不到条目。"""
     data = json.loads(Path(path).read_text(encoding='utf-8'))
     if 'class-data' in data:
-        data.setdefault('class-id', str(class_id))
+        payload_class_id = str(data.get('class-id', ''))
+        if payload_class_id and payload_class_id != str(class_id):
+            sys.exit(f'payload 的 class-id 是 {payload_class_id}，与 --class-id {class_id} 对不上')
         return data
+    if not redo_id:
+        sys.exit(
+            'payload 只有 class-data，缺 action / edit-id / class-id / redo-id。\n'
+            '登录后在编辑页控制台执行 JSON.stringify(getEditorData())，把那整份存成文件传进来；\n'
+            '或者给 --redo-id（编辑页地址 /class/edit/<模组ID>-<redo-id>/ 的后半段）。')
     return {
-        'action': 'class_add',
-        'edit-id': '0',
+        'action': 'class_edit',
+        'edit-id': str(class_id),
         'class-id': str(class_id),
-        'redo-id': '0',
+        'redo-id': str(redo_id),
         'class-data': data,
     }
 
@@ -56,16 +66,22 @@ def main():
     parser = argparse.ArgumentParser(description='提交 MC 百科模组条目的编辑')
     parser.add_argument('--class-id', required=True, help='模组条目 ID，例如 30945')
     parser.add_argument('--payload', required=True, help='class-data JSON 文件')
+    parser.add_argument('--redo-id',
+                        help='编辑版本号，编辑页地址 /class/edit/<模组ID>-<redo-id>/ 的后半段；'
+                             '整份导出里已带时可以不给')
     parser.add_argument('--content-file', help='HTML 正文文件，覆盖 payload 里的 content')
     parser.add_argument('--cookie', default='.narrafork/mcmod-cookie.txt', help='cookie 文件路径')
+    parser.add_argument('--captcha', help='需要验证码的用户组才用；值填图片上的字符')
     parser.add_argument('--dry-run', action='store_true', help='只打印提交体，不发送')
     parser.add_argument('--draft', action='store_true',
-                        help='只保存草稿（doSave），不送审；参数取自页面，未端到端实测')
+                        help='只保存草稿（doSave），不送审')
     args = parser.parse_args()
 
-    data = load_payload(args.payload, args.class_id)
+    data = load_payload(args.payload, args.class_id, args.redo_id)
     if args.content_file:
         data['class-data']['content'] = Path(args.content_file).read_text(encoding='utf-8').strip()
+    if args.captcha:
+        data['captcha'] = args.captcha
 
     if args.draft:
         body = urllib.parse.urlencode({

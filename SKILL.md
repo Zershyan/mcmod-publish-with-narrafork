@@ -211,7 +211,7 @@ python scripts/cf/upload.py upload curseforge/release-manifest.json \
 
 细节见 [MC百科](references/mcmod.md#登录与凭据)。
 
-**任何修改也一样**：改已有条目、补资料、处理退回，都先走本地脚本（`submit.py` 带 `redo-id`）。
+**任何修改也一样**：都走本地脚本。**模组条目本身**用 `edit.py`，**资料条目**用 `submit.py` 带 `redo-id`。
 
 ### 7.2 有没有现成条目
 
@@ -247,7 +247,15 @@ python scripts/mcmod/submit.py docs/mcmod/mod-config.json --captcha <字符>
 
 用户把退回附言贴过来，按资料 ID 找到条目再改：已通过的走 `/item/edit/<资料ID>/`，待审的走 `/item/add/<模组ID>-<资料ID>/`。
 
-改**模组条目**本身用 `scripts/mcmod/edit.py --class-id <模组ID> --payload <class-data.json>`：`--content-file` 换正文，`--dry-run` 先核对提交体。资料条目仍走 `submit.py` 带 `redo-id`。
+改**模组条目**本身：登录后打开 `/class/edit/<模组ID>/`，控制台执行 `JSON.stringify(getEditorData())` 存成文件，再
+
+```bash
+python scripts/mcmod/edit.py --class-id <模组ID> --payload class-data.json --content-file new.html
+```
+
+整份导出里已经带了 `redo-id`，只有裸 `class-data` 才要手动给。改动前 `--dry-run` 核一遍提交体。
+
+资料条目仍走 `submit.py` 带 `redo-id`。
 
 常见的退回原因见 [mcmod](references/mcmod.md#审核)。审核列表链接见下一节。
 

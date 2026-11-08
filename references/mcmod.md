@@ -104,16 +104,36 @@ data=<URL 编码的 JSON>
 
 ### 编辑已有条目
 
-改已上架的模组条目用 `scripts/mcmod/edit.py`：
+改已上架的模组条目：登录后打开 `https://www.mcmod.cn/class/edit/<模组ID>/`（会跳到 `.../<模组ID>-<redo-id>/`），控制台执行
+
+```js
+JSON.stringify(getEditorData())
+```
+
+得到的整份对象就是提交体，存成文件直接喂给脚本：
 
 ```bash
 python scripts/mcmod/edit.py --class-id <模组ID> --payload class-data.json
 python scripts/mcmod/edit.py --class-id <模组ID> --payload class-data.json --content-file new.html
 ```
 
-payload 可以是整份提交体，也可以只是 `class-data`——后者脚本会补上 `action` / `edit-id` / `class-id` / `redo-id`。**这几项少了，服务端不知道改哪条**，提交体里只剩一个 `class-data` 是发不出去的。
+实测（2026-11，条目 30945）`getEditorData()` 返回五个键：
 
-`--dry-run` 先看提交体，`--draft` 存草稿（`doSave` 的参数取自页面，未端到端实测）。`state` 非 0 时提交体没被消费，改完可以直接重跑。
+| 键 | 值 | 哪来的 |
+|---|---|---|
+| `action` | `class_edit` | 提交按钮 `data-type` |
+| `edit-id` | 模组 ID | 提交按钮 `edit-id` |
+| `class-id` | 模组 ID | — |
+| `redo-id` | 编辑版本号（如 `816324`） | 编辑页地址尾段 |
+| `class-data` | 22 个字段 | `getCommonFormData(jQuery('#edit-form'))` |
+
+**`redo-id` 不能猜**：每次编辑都不一样，写死 `0` 会指错条目。手上只有裸 `class-data` 时必须给 `--redo-id`，否则脚本直接拒绝。
+
+`--dry-run` 先看提交体。需要验证码的用户组（页面不提示「免验证码」的那种）带 `--captcha`。
+
+`--draft` 存草稿，走 `doSave`，参数 `actionType=class_edit` + `actionID=<模组ID>` + `data=<整份>`，与页面 `editSave()` 一致。
+
+`state` 非 0 时提交体没被消费，改完可以直接重跑。
 
 ## 封面
 
