@@ -160,7 +160,7 @@ def next_steps(project: dict, env: dict) -> list:
         steps.append('确认 CF 上有没有现成项目；没有就按 references/curseforge.md#项目创建 建一个')
     else:
         steps.append('读 curseforge/project.json 拿 projectId / slug')
-    steps.append('出配置表单收集信息，图标定稿后再逐分支跑 ./gradlew build')
+    steps.append('出配置表单收集信息，图标定稿后再逐分支跑 ./gradlew buildAlpha 与 ./gradlew build')
     if not env['cookie']:
         steps.append('发百科前先取 cookie，见 references/mcmod.md')
     return steps
@@ -205,9 +205,9 @@ def main():
     if project['uploadableJars']:
         print(f"可上传    {', '.join(project['uploadableJars'])}")
     elif project['excludedJars']:
-        print('可上传    没有：现存 jar 都带 +build.N 或是附属包，等图标定稿再跑 ./gradlew build')
+        print('可上传    没有：现存 jar 都带 +build.N 或是附属包，还差一步 ./gradlew build')
     else:
-        print('可上传    没有：还没构建，等图标定稿再跑 ./gradlew build')
+        print('可上传    没有：还没构建，等图标定稿后跑 buildAlpha 再 build')
     if project['excludedJars']:
         print(f"不上传    {len(project['excludedJars'])} 个（带编号或附属包）")
     print()

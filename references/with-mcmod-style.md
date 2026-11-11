@@ -39,16 +39,18 @@ git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 | `mod_version` | 只写模组版本，不带 MC 版本和 build 编号 |
 | 要发布的分支 | 多选，每个分支单独构建、单独上传 |
 
-**构建由 agent 触发**，但要分清两个任务的差别：
+**构建由 agent 触发**，发布前固定两步，顺序不能反：
 
-| 任务 | 能否由 agent 跑 | 原因 |
+| 步骤 | 命令 | 作用 |
 |---|---|---|
-| `./gradlew build` | ✅ 可以，默认这么做 | 沿用已记录编号，不改 `gradle.properties` |
-| `./gradlew buildAlpha` | ❌ **禁止** | 递增 `mod_build_number` 并回写属性，属开发动作 |
+| 1 | `./gradlew buildAlpha` | 递增 `mod_build_number` 并回写 `gradle.properties`，给这一版定下唯一编号 |
+| 2 | `./gradlew build` | 产出不带编号的正式包，带编号的原包归档进 `build/libs/origin/` |
 
-发布流程里只跑 `build`。构建失败就如实报告并停下，不要改用 `buildAlpha` 换个路子绕过。
+**新建条目和更新版本都要先跑 `buildAlpha`**，不能省——只跑 `build` 会沿用上一次的编号，同一版本发两次就撞号。构建失败就如实报告并停下，不要跳步。
 
 勾了「回填至项目」时，第 1 步先执行 `python scripts/project/version.py <branch>=<version> ...`，构建留到第 5 步——那时图标已定稿，才会被打进包。
+
+`buildAlpha` 改了 `gradle.properties`，多分支工程切分支前先提交。
 
 ## 产物：禁止使用带构建编号的 jar
 
@@ -57,12 +59,12 @@ git branch -a | sed 's|remotes/origin/||;s|^[* ]*||' | sort -u
 | 构建 | 最终 jar 名 | 性质 |
 |---|---|---|
 | `build` | `examplemod-0.0.1-1.21.1.jar` | 正式包，**只有这种能上传** |
-| `buildAlpha` | `examplemod-0.0.1-1.21.1+build.5.jar` | 带编号的测试构建，**禁止上传** |
+| `buildAlpha` | `examplemod-0.0.1-1.21.1+build.5.jar` | 编号留档，**禁止上传** |
 
 **任何文件名带 `+build.N` 的 jar 一律不允许上传**，没有例外。
 
 - 挑包时直接跳过带编号的
-- 某个分支只有带编号的包 → 那个分支还没跑过正式构建，停下来报告，等构建完成再来
+- 某个分支只有带编号的包 → 停下来报告，那个分支还差一步 `./gradlew build`
 - `build/libs/obfuscate/`、`build/libs/origin/` 是中间产物，同样不碰
 
 如何确认工程符合这套规范：`build.gradle` 里有 `buildAlpha` 任务、`version` 由 `<mod_version>-<minecraft_version>+build.<N>` 拼成、有 `finalizeArtifacts`。三者对上才适用本节。
@@ -99,13 +101,14 @@ Datagen 输出在 `src/generated/resources/assets/<modid>/lang/`，语言由 `<M
 
 ## 构建命令
 
-工程默认用 `buildAlpha`（会递增编号并回写属性）。发布前要正式包时：
+发布前两步，先递增编号再出正式包：
 
 ```bash
-./gradlew build
+./gradlew buildAlpha   # 递增 mod_build_number 并回写 gradle.properties
+./gradlew build        # 产出不带编号的正式包，带编号的原包归档进 build/libs/origin/
 ```
 
-它会产出不带编号的最终包，同时把带编号的原包归档进 `build/libs/origin/`。
+顺序不能反：只跑 `build` 会沿用上一次的编号，同一版本发两次就撞号了。
 
 改了构建逻辑或资源处理时，按 `build.md` 的要求核对产物本身，不能只看任务退出码。
 

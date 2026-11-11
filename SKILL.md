@@ -126,7 +126,7 @@ python scripts/project/make_icon.py <模组英文名> --out src/main/resources/l
 
 样式文件会被自动读取；要临时覆盖就加 `--font georgiab.ttf --font-size 56 --fg "#3b1f0e"` 这类参数，加 `--save-style` 则一并写回配置。多行用 `--lines "Forge|Attachment"`。
 
-**图标必须在构建之前定稿**：第 5 步的 `./gradlew build` 会把它打进包，构建之后再生成，包里就没有它。
+**图标必须在构建之前定稿**：第 5 步的构建会把它打进包，构建之后再生成，包里就没有它。
 
 ### 提交结果怎么还原
 
@@ -138,9 +138,18 @@ python scripts/project/make_icon.py <模组英文名> --out src/main/resources/l
 
 ## 第 5 步：构建，然后出清单
 
-- **自己跑 `./gradlew build`**，绝不跑 `buildAlpha`（后者递增编号并回写属性，属开发动作）
-- 构建失败就如实报告停下，不要改用 `buildAlpha` 绕过；表单结果已经落在 `payload.json` 里，修好接着跑，不用重填
-- 多分支工程逐个分支构建，`mod_version` 与 `minecraft_version` 可能不一样
+**任何发布都先 `buildAlpha` 再 `build`**，新建条目和更新版本都一样：
+
+```bash
+./gradlew buildAlpha   # 递增 mod_build_number 并回写 gradle.properties
+./gradlew build        # 产出可直接上传的正式包
+```
+
+只跑 `build` 会沿用上一次的编号，同一版本发两次就撞号。`buildAlpha` 那份带 `+build.N`，只留档不传。
+
+- 构建失败就如实报告停下；表单结果已经落在 `payload.json` 里，修好接着跑，不用重填
+- 多分支工程逐分支走这两步，`mod_version` 与 `minecraft_version` 可能不一样
+- `buildAlpha` 会改 `gradle.properties`，**切分支前先提交**，否则 git 不让带走未提交的改动
 
 ```bash
 python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \
@@ -277,7 +286,7 @@ python scripts/mcmod/edit.py --class-id <模组ID> --payload class-data.json --c
 只有这几种情况停，其余自己往下走：
 
 - preflight 里的 ✗ 补不上（令牌、依赖、cookie）
-- 构建失败（如实报告失败本身，不要换 `buildAlpha` 绕过）
+- 构建失败（如实报告失败本身，不要跳过 `buildAlpha` 换个路子）
 - 工程里读不到的四类信息：中文名、CF 分类、百科模组元素、百科作者名（能放进表单的一律放进表单问）
 - 需要验证码或登录凭据
 - 线上已有同名条目但内容不同

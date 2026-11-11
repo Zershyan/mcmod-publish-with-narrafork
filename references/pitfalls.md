@@ -112,9 +112,9 @@
 
 **症状**：CurseForge 上的文件名带 `+build.5` 这类后缀，或者和同版本线的其他产物对不上。
 
-**原因**：`build/libs` 里同时躺着普通 `build` 和 `buildAlpha` 的产物，选错了。`zershyan-mcmod-style` 规范里，带 `+build.<N>` 的是 alpha 测试构建。
+**原因**：`build/libs` 里同时躺着普通 `build` 和 `buildAlpha` 的产物，选错了。`buildAlpha` 是发布流程的**前一步**（递增编号），它那份带 `+build.<N>`，只留档。
 
-**做法**：装了 style skill 且构建脚本符合其规范时，**禁止上传任何文件名带 `+build.N` 的 jar**，没有例外。挑了也不许，只剩这种包的分支直接停下报告，等正式构建完成再来。候选里都没编号时按版本号取最新。
+**做法**：装了 style skill 且构建脚本符合其规范时，**禁止上传任何文件名带 `+build.N` 的 jar**，没有例外。只剩这种包的分支说明还差 `./gradlew build`，跑完再挑。候选里都没编号时按版本号取最新。
 
 ### 依赖漏声明
 

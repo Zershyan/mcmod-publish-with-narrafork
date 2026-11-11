@@ -147,7 +147,7 @@ def main():
         if available:
             lines.append('build/libs 里现有：' + '、'.join(available))
         else:
-            lines.append('build/libs 是空的，先在对应分支跑 ./gradlew build')
+            lines.append('build/libs 是空的，先在对应分支跑 buildAlpha 再 build')
         raise SystemExit('\n'.join(lines))
 
     out = Path(args.out)

@@ -36,7 +36,7 @@ FormBuild ──► 分支 + mod_version ──► version.py ──► gradle.p
 FormFull ──► payload.json ──┬─► make_icon.py ──► logo.png
                             └─► mod-config.json
 
-logo.png 定稿 ──► ./gradlew build ──► build/libs/*.jar ──► make_manifest.py ──► release-manifest.json
+logo.png 定稿 ──► buildAlpha（递增编号）──► build（正式包）──► build/libs/*.jar ──► make_manifest.py ──► release-manifest.json
 
 FormConfirm ──► 用户确认 ──┬─► create_project.py ──► project.json
                           ├─► set_links.py
