@@ -132,6 +132,14 @@
 
 **做法**：**要么有内容，要么字段不存在**。`make_manifest.py` 只在真有依赖时才加 `relations`，`upload.py` 上传前会再摘一次空壳——手写或历史 manifest 带下来的也能兜住。
 
+### 发新版却回显上个版本的文件 ID
+
+**症状**：`upload.py upload` 跑完没报错，但打印的文件 ID 和上一版一样，CurseForge 上没有新文件，等于什么都没传。
+
+**原因**：去重第一层读 `curseforge/upload-result-<MC版本>.json`，这个键里**没有版本号**。同一 MC 版本发第二版时，上一版那份记录还在，脚本就认为「已受理」直接跳过。
+
+**做法**：发版前先 `python scripts/cf/history.py`，把上一版记录挪进 `curseforge/history/<版本>/`。版本号默认从上一版清单的 `displayName` 取，`--dry-run` 可以先看要挪哪些；`project.json` 与 `game-versions.json` 不动。
+
 ## MC百科
 
 ### tagsinput 直接改 `value` 不生效

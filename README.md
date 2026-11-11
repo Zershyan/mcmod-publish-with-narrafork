@@ -36,7 +36,7 @@ assets/
   content-templates.md  百科正文模板
 scripts/
   preflight.py       开局体检：工程事实、构建规范、凭据、下一步
-  cf/                CurseForge：请求封装、上传、清单生成、建项目、补链接
+  cf/                CurseForge：请求封装、上传、清单生成、建项目、补链接、记录归档
   mcmod/             百科：cookie、作者查询、条目提交与编辑
   mcmod/console/     百科控制台脚本模板（没有 cookie 时的兜底）
   project/           工程侧：版本号回填、占位图标生成与样式存档（.narrafork/icon-style.json）

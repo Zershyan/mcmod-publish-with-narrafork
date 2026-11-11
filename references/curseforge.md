@@ -238,7 +238,7 @@ python scripts/cf/upload.py list curseforge --project-id <ID>
 
 三层去重，命中任一层就跳过：
 
-1. `upload-result-<版本>.json` 里已有 ID
+1. `upload-result-<MC版本>.json` 里已有 ID —— **这个键不含模组版本号**，发新版前先跑 `history.py` 归档，否则新版本会被当成已受理跳过
 2. 线上文件列表里 displayName 相同
 3. 有 `upload-attempt-<版本>.json` 但没结果 → 拒绝重传，先核对线上
 

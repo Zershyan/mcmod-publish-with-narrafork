@@ -136,7 +136,7 @@ python scripts/project/make_icon.py <模组英文名> --out src/main/resources/l
 
 清单要等第 5 步构建完才出得来，`make_manifest.py` 要用真实的 jar 算 sha256。
 
-## 第 5 步：构建，然后出清单
+## 第 5 步：构建、归档、出清单
 
 **任何发布都先 `buildAlpha` 再 `build`**，新建条目和更新版本都一样：
 
@@ -150,6 +150,16 @@ python scripts/project/make_icon.py <模组英文名> --out src/main/resources/l
 - 构建失败就如实报告停下；表单结果已经落在 `payload.json` 里，修好接着跑，不用重填
 - 多分支工程逐分支走这两步，`mod_version` 与 `minecraft_version` 可能不一样
 - `buildAlpha` 会改 `gradle.properties`，**切分支前先提交**，否则 git 不让带走未提交的改动
+
+### 先归档上一版，再出清单
+
+```bash
+python scripts/cf/history.py
+```
+
+`upload.py` 的去重键是 `curseforge/upload-result-<MC版本>.json`，**不看版本号**。上一版同名记录还在，新版本就会被当成「已受理」跳过——表现是上传跑完回显的还是旧文件 ID，等于没传。
+
+这个脚本把上一版记录挪进 `curseforge/history/<上一版版本>/`，`project.json` 与 `game-versions.json` 跨版本复用，不动。首次发布没有记录时它会直接说明并退出。
 
 ```bash
 python scripts/cf/make_manifest.py .narrafork/gen_ui/publish/payload.json \

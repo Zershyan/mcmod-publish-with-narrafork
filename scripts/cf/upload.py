@@ -175,7 +175,8 @@ def main():
         if result_path.exists():
             existing = json.loads(result_path.read_text(encoding='utf-8'))
             if existing.get('id'):
-                print(label, '已受理，文件 ID', existing['id'])
+                print(f"{label} 已有上传记录（文件 ID {existing['id']}），跳过；"
+                      f'发新版本前先跑 python scripts/cf/history.py 归档旧记录')
                 continue
         if display_name and display_name in remote:
             print(label, '线上已存在，文件 ID', remote[display_name])
